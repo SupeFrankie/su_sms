@@ -1,0 +1,64 @@
+<!-- views/sms_department_expenditure_views.xml - NEW -->
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Department Expenditure list View -->
+        <record id="view_sms_department_expenditure_list" model="ir.ui.view">
+            <field name="name">sms.department.expenditure.list</field>
+            <field name="model">sms.department.expenditure</field>
+            <field name="arch" type="xml">
+                <list string="Department SMS Expenditure" create="false" edit="false" delete="false">
+                    <field name="department_name"/>
+                    <field name="department_short_name"/>
+                    <field name="month_sent"/>
+                    <field name="year_sent"/>
+                    <field name="credit_spent" sum="Total Credit Spent"/>
+                    <field name="kfs5_processed"/>
+                    <field name="kfs5_processed_date"/>
+                    <field name="account_number"/>
+                    <field name="object_code"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Department Expenditure Search View -->
+        <record id="view_sms_department_expenditure_search" model="ir.ui.view">
+            <field name="name">sms.department.expenditure.search</field>
+            <field name="model">sms.department.expenditure</field>
+            <field name="arch" type="xml">
+                <search string="Search Department Expenditure">
+                    <field name="department_name"/>
+                    <field name="month_sent"/>
+                    <field name="year_sent"/>
+                    <separator/>
+                    <filter string="Not Processed" name="not_processed" domain="[('kfs5_processed', '=', False)]"/>
+                    <filter string="Processed" name="processed" domain="[('kfs5_processed', '=', True)]"/>
+                    <separator/>
+                    <filter string="Current Month" name="current_month" 
+                            domain="[('month_sent', '=', context_today().strftime('%m')), ('year_sent', '=', context_today().strftime('%Y'))]"/>
+                    <group>
+                        <filter string="Department" name="group_department" context="{'group_by': 'department_id'}"/>
+                        <filter string="Month" name="group_month" context="{'group_by': 'month_sent'}"/>
+                        <filter string="Year" name="group_year" context="{'group_by': 'year_sent'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Department Expenditure Action -->
+        <record id="action_sms_department_expenditure" model="ir.actions.act_window">
+            <field name="name">Department Expenditure</field>
+            <field name="res_model">sms.department.expenditure</field>
+            <field name="view_mode">list</field>
+            <field name="context">{'search_default_current_month': 1}</field>
+        </record>
+
+        <!-- Menu Item -->
+        <menuitem id="menu_sms_department_expenditure"
+                  name="Department Expenditure"
+                  parent="menu_sms_marketing_config"
+                  action="action_sms_department_expenditure"
+                  sequence="30"
+                  groups="group_sms_system_admin"/>
+    </data>
+</odoo>

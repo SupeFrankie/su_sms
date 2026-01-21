@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Demo Schools/Faculties -->
+        <record id="dept_school_computing" model="hr.department">
+            <field name="name">School of Engineering Sciences</field>
+            <field name="short_name">SCES</field>
+            <field name="is_school">True</field>
+            <field name="chart_code">SU</field>
+            <field name="account_number">2202800</field>
+            <field name="object_code">2700</field>
+        </record>
+
+        <record id="dept_school_business" model="hr.department">
+            <field name="name">Strathmore Business School</field>
+            <field name="short_name">SBS</field>
+            <field name="is_school">True</field>
+            <field name="chart_code">SU</field>
+            <field name="account_number">2202801</field>
+            <field name="object_code">2700</field>
+        </record>
+
+        <!-- Demo Departments -->
+        <record id="dept_ict" model="hr.department">
+            <field name="name">ICT Department</field>
+            <field name="short_name">ICTD</field>
+            <field name="parent_id" ref="dept_school_computing"/>
+            <field name="chart_code">SU</field>
+            <field name="account_number">2202800</field>
+            <field name="object_code">2700</field>
+        </record>
+
+        <!-- Demo Student Programs -->
+        <record id="program_bsc_cs" model="student.program">
+            <field name="name">Bachelor of Science in Computer Science</field>
+            <field name="code">BSC-CS</field>
+            <field name="school_id" ref="dept_school_computing"/>
+        </record>
+
+        <record id="program_bba" model="student.program">
+            <field name="name">Bachelor of Business Administration</field>
+            <field name="code">BBA</field>
+            <field name="school_id" ref="dept_school_business"/>
+        </record>
+
+        <!-- Demo Courses -->
+        <record id="course_cs_general" model="student.course">
+            <field name="name">Computer Science</field>
+            <field name="short_name">CS</field>
+            <field name="program_id" ref="program_bsc_cs"/>
+        </record>
+
+        <!-- Demo Academic Years -->
+        <record id="academic_year_2024_2025" model="student.academic.year">
+            <field name="name">2024/2025</field>
+            <field name="date_start">09-01-2024</field>
+            <field name="date_end">06-30-2025</field>
+        </record>
+
+        <!-- Demo Intakes -->
+        <record id="intake_jan_2025" model="student.intake">
+            <field name="name">January 2025</field>
+            <field name="year">2025</field>
+        </record>
+
+        <record id="intake_may_2024" model="student.intake">
+            <field name="name">May 2024</field>
+            <field name="year">2024</field>
+        </record>
+
+        <record id="intake_sep_2024" model="student.intake">
+            <field name="name">September 2024</field>
+            <field name="year">2024</field>
+        </record>
+    </data>
+</odoo>

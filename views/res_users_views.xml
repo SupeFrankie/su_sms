@@ -1,0 +1,51 @@
+<!-- views/res_users_views.xml - NEW -->
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Users Form View - Inherit and extend -->
+        <record id="view_res_users_form_sms" model="ir.ui.view">
+            <field name="name">res.users.form.sms</field>
+            <field name="model">res.users</field>
+            <field name="inherit_id" ref="base.view_users_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='preferences']" position="after">
+                    <page string="SMS Access" groups="su_sms.group_sms_system_admin">
+                        <group>
+                            <group string="SMS Role">
+                                <field name="sms_role" readonly="1"/>
+                                <field name="department_id"/>
+                            </group>
+                            <group string="SMS Permissions">
+                                <div class="alert alert-info">
+                                    <p><strong>Current SMS Access:</strong></p>
+                                    <ul>
+                                        <li t-if="sms_role == 'system_admin'">Full system access - All modules</li>
+                                        <li t-if="sms_role == 'administrator'">Staff SMS and Students SMS</li>
+                                        <li t-if="sms_role == 'faculty_admin'">Students SMS only</li>
+                                        <li t-if="sms_role == 'department_admin'">Staff SMS (Department only)</li>
+                                        <li t-if="sms_role == 'basic'">Ad Hoc and Manual SMS only</li>
+                                        <li t-if="not sms_role">No SMS access</li>
+                                    </ul>
+                                    <p class="text-muted"><small>Note: All users can access Ad Hoc and Manual SMS modules</small></p>
+                                </div>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Users list View - Inherit and extend -->
+        <record id="view_res_users_list_sms" model="ir.ui.view">
+            <field name="name">res.users.list.sms</field>
+            <field name="model">res.users</field>
+            <field name="inherit_id" ref="base.view_users_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='login']" position="after">
+                    <field name="sms_role" groups="su_sms.group_sms_system_admin"/>
+                    <field name="department_id" groups="su_sms.group_sms_system_admin"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

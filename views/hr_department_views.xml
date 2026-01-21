@@ -1,0 +1,57 @@
+<!-- views/hr_department_views.xml - NEW -->
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Department Form View - Inherit and extend -->
+        <record id="view_hr_department_form_sms" model="ir.ui.view">
+            <field name="name">hr.department.form.sms</field>
+            <field name="model">hr.department</field>
+            <field name="inherit_id" ref="hr.view_department_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="inside">
+                    <notebook>
+                        <page string="SMS Configuration" groups="su_sms.group_sms_system_admin">
+                            <group>
+                                <group string="Department Details">
+                                    <field name="short_name"/>
+                                    <field name="is_school"/>
+                                    <field name="administrator_id"/>
+                                </group>
+                                <group string="Kuali Billing Information">
+                                    <field name="chart_code"/>
+                                    <field name="account_number"/>
+                                    <field name="object_code"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="SMS Statistics">
+                                    <field name="sms_credit_balance" readonly="1"/>
+                                    <field name="sms_sent_this_month" readonly="1"/>
+                                    <field name="sms_cost_this_month" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Department List View - Inherit and extend -->
+        <record id="view_hr_department_list_sms" model="ir.ui.view">
+            <field name="name">hr.department.list.sms</field>
+            <field name="model">hr.department</field>
+            <field name="inherit_id" ref="hr.view_department_list"/>
+            <field name="arch" type="xml">
+                <xpath expr="//list" position="attributes">
+                    <attribute name="decoration-primary">is_school == True</attribute>
+                </xpath>
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="short_name"/>
+                    <field name="is_school" invisible="1"/>
+                    <field name="account_number" groups="su_sms.group_sms_system_admin"/>
+                    <field name="object_code" groups="su_sms.group_sms_system_admin"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

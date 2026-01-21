@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="module_category_sms" model="ir.module.category">
+            <field name="name">SMS Management</field>
+            <field name="description">Manage SMS campaigns and communications</field>
+            <field name="sequence">15</field>
+        </record>
+
+        <!-- Base SMS User (Everyone with SMS access) -->
+        <record id="group_sms_user" model="res.groups">
+            <field name="name">SMS User</field>
+            <field name="category_id" ref="module_category_sms"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- Department SMS Coordinator (Faculty admins) -->
+        <record id="group_sms_department_coordinator" model="res.groups">
+            <field name="name"> Faculty Administrator </field>
+            <field name="category_id" ref="module_category_sms"/>
+            <field name="implied_ids" eval="[(4, ref('group_sms_user'))]"/>
+            <field name="comment">Can send SMS to their faculty only</field>
+        </record>
+
+        <!-- SMS Manager (ICT staff, Marketing team) -->
+        <record id="group_sms_manager" model="res.groups">
+            <field name="name">Staff Administrator</field>
+            <field name="category_id" ref="module_category_sms"/>
+            <field name="implied_ids" eval="[(4, ref('group_sms_department_coordinator'))]"/>
+            <field name="comment">Full access to SMS features for staff</field>
+        </record>
+
+        <!-- SMS Administrator (System admins only) -->
+        <record id="group_sms_admin" model="res.groups">
+            <field name="name">SMS Administrator</field>
+            <field name="category_id" ref="module_category_sms"/>
+            <field name="implied_ids" eval="[(4, ref('group_sms_manager'))]"/>
+            <field name="comment">Can configure gateways, API keys, system settings</field>
+        </record>
+
+        <!-- Module Category (Groups them in UI) -->
+        <record id="module_category_sms" model="ir.module.category">
+            <field name="name">SMS Marketing</field>
+            <field name="description">Manage SMS campaigns and communications</field>
+            <field name="sequence">15</field>
+        </record>
+    </data>
+</odoo>

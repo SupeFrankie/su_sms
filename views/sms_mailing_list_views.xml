@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- SMS Mailing List, list View -->
+        <record id="view_sms_mailing_list_list" model="ir.ui.view">
+            <field name="name">sms.mailing.list.list</field>
+            <field name="model">sms.mailing.list</field>
+            <field name="arch" type="xml">
+                <list string="Mailing Lists">
+                    <field name="name"/>
+                    <field name="list_type"/>
+                    <field name="contact_count"/>
+                    <field name="active" invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- SMS Mailing List Form View -->
+        <record id="view_sms_mailing_list_form" model="ir.ui.view">
+            <field name="name">sms.mailing.list.form</field>
+            <field name="model">sms.mailing.list</field>
+            <field name="arch" type="xml">
+                <form string="Mailing List">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                                <field name="active" widget="boolean_button" options='{"terminology": "archive"}'/>
+                            </button>
+                        </div>
+                        
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="e.g., First Year Students, ICT Club Members"/>
+                            </h1>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="list_type"/>
+                                <field name="contact_count"/>
+                            </group>
+                            <group>
+                                <field name="department_id" invisible="list_type != 'department'"/>
+                                <field name="club_id" invisible="list_type != 'club'"/>
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Contacts">
+                                <field name="contact_ids">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="mobile"/>
+                                        <field name="contact_type"/>
+                                        <field name="opt_in" widget="boolean_toggle"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Description">
+                                <field name="description" placeholder="Description of this mailing list..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- SMS Mailing List Search View -->
+        <record id="view_sms_mailing_list_search" model="ir.ui.view">
+            <field name="name">sms.mailing.list.search</field>
+            <field name="model">sms.mailing.list</field>
+            <field name="arch" type="xml">
+                <search string="Search Mailing Lists">
+                    <field name="name"/>
+                    <field name="list_type"/>
+                    <field name="department_id"/>
+                    <field name="club_id"/>
+                    <separator/>
+                    <filter string="Department Lists" name="department" domain="[('list_type', '=', 'department')]"/>
+                    <filter string="Club Lists" name="club" domain="[('list_type', '=', 'club')]"/>
+                    <filter string="Custom Lists" name="custom" domain="[('list_type', '=', 'custom')]"/>
+                    <separator/>
+                    <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                    <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                    <group>
+                        <filter string="Type" name="group_type" context="{'group_by': 'list_type'}"/>
+                        <filter string="Department" name="group_department" context="{'group_by': 'department_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- SMS Mailing List Action -->
+        <record id="action_sms_mailing_list" model="ir.actions.act_window">
+            <field name="name">Mailing Lists</field>
+            <field name="res_model">sms.mailing.list</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'search_default_active': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Create your first Mailing List</p>
+                <p>Mailing lists help you organize contacts into groups for targeted SMS campaigns.</p>
+            </field>
+        </record>
+
+        <!-- Menu Item -->
+        <menuitem id="menu_sms_mailing_lists" 
+                  name="Mailing Lists" 
+                  parent="menu_sms_main" 
+                  action="action_sms_mailing_list" 
+                  sequence="30"/>
+    </data>
+</odoo>
