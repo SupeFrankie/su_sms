@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Staff SMS Filter Form View -->
+        <record id="view_sms_staff_filter_form" model="ir.ui.view">
+            <field name="name">sms.staff.filter.form</field>
+            <field name="model">sms.staff.filter</field>
+            <field name="arch" type="xml">
+                <form string="Staff SMS">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Send SMS to Staff Members</h1>
+                        </div>
+                        
+                        <group>
+                            <group string="Filters">
+                                <field name="administrator_id" readonly="1"/>
+                                <field name="department_id" options="{'no_create': True}"/>
+                                <field name="category"/>
+                                <field name="job_status_type"/>
+                            </group>
+                            <group string="Message Statistics">
+                                <field name="char_count" readonly="1"/>
+                                <field name="sms_count" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Message">
+                            <field name="message" widget="text" placeholder="Enter your message here..." nolabel="1"/>
+                        </group>
+                        
+                        <div class="alert alert-info mt-3">
+                            <p><strong>SMS Pricing:</strong> 1 SMS = 160 characters | Each additional 153 characters = +1 SMS</p>
+                        </div>
+                    </sheet>
+                    
+                    <footer>
+                        <button name="action_view_recipients" string="Preview Recipients" type="object" class="btn-secondary"/>
+                        <button name="action_send_sms" string="Send SMS" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Staff SMS Action -->
+        <record id="action_sms_staff" model="ir.actions.act_window">
+            <field name="name">Staff SMS</field>
+            <field name="res_model">sms.staff.filter</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{}</field>
+        </record>
+    </data>
+</odoo>

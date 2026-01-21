@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- List View -->
+        <record id="view_sms_department_list" model="ir.ui.view">
+            <field name="name">sms.department.list</field>
+            <field name="model">sms.department</field>
+            <field name="arch" type="xml">
+                <list string="SMS Departments">
+                    <field name="name"/>
+                    <field name="short_name"/>
+                    <field name="chart_code"/>
+                    <field name="account_number"/>
+                    <field name="object_code"/>
+                    <field name="message_count"/>
+                    <field name="total_spent" sum="Total Spent"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Form View -->
+        <record id="view_sms_department_form" model="ir.ui.view">
+            <field name="name">sms.department.form</field>
+            <field name="model">sms.department</field>
+            <field name="arch" type="xml">
+                <form string="SMS Department">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button class="oe_stat_button" icon="fa-envelope" type="object">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_value"><field name="message_count"/></span>
+                                    <span class="o_stat_text">Messages</span>
+                                </div>
+                            </button>
+                            <button class="oe_stat_button" icon="fa-money" type="object">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_value"><field name="total_spent"/></span>
+                                    <span class="o_stat_text">Total Spent (KES)</span>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <div class="oe_title">
+                            <h1><field name="name" placeholder="Department Name"/></h1>
+                        </div>
+                        
+                        <group>
+                            <group string="Department Information">
+                                <field name="short_name"/>
+                                <field name="active" widget="boolean_toggle"/>
+                            </group>
+                            <group string="KFS5 Billing Information">
+                                <field name="chart_code"/>
+                                <field name="account_number"/>
+                                <field name="object_code"/>
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Administrators">
+                                <field name="administrator_ids">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="email"/>
+                                        <field name="phone"/>
+                                        <field name="total_messages"/>
+                                        <field name="active"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_sms_department" model="ir.actions.act_window">
+            <field name="name">Departments</field>
+            <field name="res_model">sms.department</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first SMS Department
+                </p>
+                <p>
+                    Configure departments for billing and administrator assignment.
+                </p>
+            </field>
+        </record>
+    </data>
+</odoo>

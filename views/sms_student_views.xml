@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Student SMS Filter Form View -->
+        <record id="view_sms_student_filter_form" model="ir.ui.view">
+            <field name="name">sms.student.filter.form</field>
+            <field name="model">sms.student.filter</field>
+            <field name="arch" type="xml">
+                <form string="Student SMS">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Send SMS to Students</h1>
+                        </div>
+                        
+                        <group>
+                            <group string="Academic Filters">
+                                <field name="administrator_id" readonly="1"/>
+                                <field name="school_id" options="{'no_create': True}"/>
+                                <field name="program_id" options="{'no_create': True}"/>
+                                <field name="course_id" options="{'no_create': True}"/>
+                                <field name="academic_year_id" options="{'no_create': True}"/>
+                                <field name="student_year"/>
+                            </group>
+                            <group string="Additional Filters">
+                                <field name="enrolment_period_id" options="{'no_create': True}"/>
+                                <field name="module_id" options="{'no_create': True}"/>
+                                <field name="intake_id" options="{'no_create': True}"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Recipients">
+                            <group>
+                                <field name="send_to_students"/>
+                                <field name="send_to_fathers"/>
+                                <field name="send_to_mothers"/>
+                            </group>
+                            <group string="Message Statistics">
+                                <field name="char_count" readonly="1"/>
+                                <field name="sms_count" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Message">
+                            <field name="message" widget="text" placeholder="Enter your message here..." nolabel="1"/>
+                        </group>
+                        
+                        <div class="alert alert-info mt-3">
+                            <p><strong>SMS Pricing:</strong> 1 SMS = 160 characters | Each additional 153 characters = +1 SMS</p>
+                        </div>
+                    </sheet>
+                    
+                    <footer>
+                        <button name="action_view_recipients" string="Preview Recipients" type="object" class="btn-secondary"/>
+                        <button name="action_send_sms" string="Send SMS" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Student SMS Action -->
+        <record id="action_sms_student" model="ir.actions.act_window">
+            <field name="name">Student SMS</field>
+            <field name="res_model">sms.student.filter</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{}</field>
+        </record>
+    </data>
+</odoo>

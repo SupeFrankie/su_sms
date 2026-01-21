@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- List View -->
+        <record id="view_sms_administrator_list" model="ir.ui.view">
+            <field name="name">sms.administrator.list</field>
+            <field name="model">sms.administrator</field>
+            <field name="arch" type="xml">
+                <list string="SMS Administrators">
+                    <field name="name"/>
+                    <field name="email"/>
+                    <field name="phone"/>
+                    <field name="department_id"/>
+                    <field name="total_messages"/>
+                    <field name="total_spent"/>
+                    <field name="active"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Form View -->
+        <record id="view_sms_administrator_form" model="ir.ui.view">
+            <field name="name">sms.administrator.form</field>
+            <field name="model">sms.administrator</field>
+            <field name="arch" type="xml">
+                <form string="SMS Administrator">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button class="oe_stat_button" icon="fa-envelope" 
+                                    type="object" name="action_view_messages">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_value"><field name="total_messages"/></span>
+                                    <span class="o_stat_text">Messages</span>
+                                </div>
+                            </button>
+                            <button class="oe_stat_button" icon="fa-money" type="object">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_value"><field name="total_spent"/></span>
+                                    <span class="o_stat_text">Spent (KES)</span>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <div class="oe_title">
+                            <h1><field name="name" placeholder="Administrator Name"/></h1>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="user_id" options="{'no_create': True}"/>
+                                <field name="department_id"/>
+                            </group>
+                            <group>
+                                <field name="email"/>
+                                <field name="phone"/>
+                                <field name="active" widget="boolean_toggle"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_sms_administrator" model="ir.actions.act_window">
+            <field name="name">Administrators</field>
+            <field name="res_model">sms.administrator</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Add your first SMS Administrator
+                </p>
+                <p>
+                    Manage users who can send SMS messages.
+                </p>
+            </field>
+        </record>
+    </data>
+</odoo>

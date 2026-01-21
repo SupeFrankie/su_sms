@@ -1,0 +1,45 @@
+<? xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+    <!-- SMS Type: Staff -->
+        <record id="sms_type_staff" model="sms.type">
+            <field name="name">Staff SMS</field>
+            <field name="code">staff</field>
+            <field name="sequence">10</field>
+            <field name="description">SMS messages sent to staff.</field>
+        </record>
+
+    <!-- SMS Type: Student -->
+        <record id="sms_type_student" model="sms.type">
+            <field name="name">Student SMS</field>
+            <field name="code">student</field>
+            <field name="sequence">20</field>
+            <field name="description">SMS sent to students</field>
+        </record>
+
+        <!-- SMS Type: Ad Hoc -->
+        <record id="sms_type_adhoc" model="sms.type">
+            <field name="name">Ad Hoc SMS</field>
+            <field name="code">adhoc</field>
+            <field name="sequence">30</field>
+            <field name="description">SMS sent to CSV uploaded contacts</field>
+        </record>
+
+        <!-- SMS Type: Manual -->
+        <record id="sms_type_manual" model="sms.type">
+            <field name="name">Manual SMS</field>
+            <field name="code">manual</field>
+            <field name="sequence">40</field>
+            <field name="description">SMS sent to manually entered numbers</field>
+        </record>
+
+        <!-- SMS Type: Marketing -->
+        <record id="sms_type_marketing" model="sms.type">
+            <field name="name">Marketing Campaign</field>
+            <field name="code">marketing</field>
+            <field name="sequence">50</field>
+            <field name="description">Marketing and promotional SMS</field>
+        </record>
+    </data>
+</odoo>
