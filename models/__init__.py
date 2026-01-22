@@ -8,9 +8,7 @@ Order of import matters because of dependencies:
 1. Base models first (contacts, blacklist)
 2. Then models that reference them (mailing list)
 3. Finally messages and templates
-"""
 
-"""
 Models Package - Import Order Matters!
 """
 
@@ -51,3 +49,6 @@ from . import sms_student_filter
 
 # Expenditure reporting
 from . import sms_department_expenditure
+
+# Incoming SMS reporting
+from . import sms_incoming

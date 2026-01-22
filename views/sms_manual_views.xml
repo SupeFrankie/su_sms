@@ -52,7 +52,7 @@
                             <field name="manual_numbers" widget="text" 
                                    placeholder="Enter comma-separated phone numbers:&#10;+254712345678, +254723456789, +254734567890" 
                                    nolabel="1"/>
-                            <div class="alert alert-info">
+                            <div class="alert alert-info" role="alert">
                                 <p><strong>Format:</strong> Separate numbers with commas. Include country code (+254 for Kenya)</p>
                                 <p><strong>Example:</strong> +254712345678, +254723456789</p>
                             </div>

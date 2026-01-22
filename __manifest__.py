@@ -48,7 +48,9 @@
                 'mail', 
                 'contacts', 
                 'web', 
-                'hr'],
+                'hr',
+                'mass_mailing_sms',
+                ],
     'data': [
         # Security FIRST
         'security/security_groups.xml',
@@ -58,7 +60,7 @@
         'data/sms_type_data.xml',
         
         # --- LOAD WIZARDS EARLY (Dependencies for Views) ---
-        'wizard/sms_composer_views.xml',  # <--- MOVED UP HERE (Fixes the crash)
+        'wizard/sms_composer_views.xml', 
         
         # --- LOAD VIEW FILES (DEFINING ACTIONS) ---
         'views/sms_gateway_views.xml',

@@ -14,7 +14,7 @@
                                 <field name="department_id"/>
                             </group>
                             <group string="SMS Permissions">
-                                <div class="alert alert-info">
+                                <div class="alert alert-info" role="alert">
                                     <p><strong>Current SMS Access:</strong></p>
                                     <ul>
                                         <li invisible="sms_role != 'system_admin'">Full system access - All modules</li>

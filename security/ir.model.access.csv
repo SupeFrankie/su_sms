@@ -46,3 +46,4 @@ access_sms_department_manager,sms.department.manager,model_sms_department,group_
 access_sms_administrator_all,sms.administrator.all,model_sms_administrator,base.group_user,1,0,0,0
 access_sms_administrator_manager,sms.administrator.manager,model_sms_administrator,group_sms_system_admin,1,1,1,1
 access_sms_compose_wizard,access_sms_compose_wizard,model_sms_compose_wizard,base.group_user,1,1,1,1
+access_sms_incoming_message,access_sms_incoming_message,model_sms_incoming_message,base.group_user,1,0,0,0

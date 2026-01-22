@@ -16,7 +16,14 @@ Author: Francis Martine Nyabuto Agata
 Contact: SupeFrankie@github.com
 """
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 # Import subpackages
 from . import models
 from . import wizard
 from . import controllers
+
+__all__ = ["models", "wizard", "controllers"]

@@ -79,15 +79,15 @@
                             <group>
                                 <field name="sms_type_id" required="1" options="{'no_create': True}"/>
                                 <field name="target_type" required="1"/>
-                                <field name="administrator_id" required="1" options="{'no_create': True}" invisible="context.get('hide_administrator')"/>
+                                <field name="administrator_id" required="1" options="{'no_create': True}" invisible="not context.get('show_administrator', True)"/>
                                 <field name="gateway_id" required="1" options="{'no_create': True}"/>
                             </group>
                             <group>
                                 <field name="send_immediately"/>
                                 <field name="schedule_date" invisible="send_immediately"/>
                                 <field name="personalized"/>
-                                <field name="kfs5_processed" readonly="1" groups="group_sms_system_admin"/>
-                                <field name="kfs5_processed_date" readonly="1" groups="group_sms_system_admin"/>
+                                <field name="kfs5_processed" readonly="1" groups="su_sms.group_sms_system_admin"/>
+                                <field name="kfs5_processed_date" readonly="1" groups="su_sms.group_sms_system_admin"/>
                             </group>
                         </group>
                         
@@ -133,7 +133,7 @@
                                     </group>
                                 </group>
                                 <group invisible="not personalized">
-                                    <div class="alert alert-info">
+                                    <div class="alert alert-info" role="alert">
                                         <p><strong>Available placeholders:</strong></p>
                                         <ul>
                                             <li>{name} - Recipient name</li>
@@ -202,7 +202,7 @@
                     <separator/>
                     <filter string="My Campaigns" name="my_campaigns" domain="[('administrator_id', '=', uid)]"/>
                     <separator/>
-                    <filter string="Not Processed in KFS5" name="not_kfs5" domain="[('kfs5_processed', '=', False)]" groups="group_sms_system_admin"/>
+                    <filter string="Not Processed in KFS5" name="not_kfs5" domain="[('kfs5_processed', '=', False)]" groups="su_sms.group_sms_system_admin"/>
                     <separator/>
                     <filter string="Scheduled Date" name="schedule_date" date="schedule_date"/>
                     <filter string="Creation Date" name="create_date" date="create_date"/>
@@ -223,9 +223,7 @@
             <field name="name">All SMS Campaigns</field>
             <field name="res_model">sms.campaign</field>
             <field name="view_mode">list,form</field>
-            <field name="context">{
-                'hide_administrator': not (user.has_group('su_sms.group_sms_system_admin'))
-            }</field>
+            <field name="context">{}</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">Create your first SMS Campaign</p>
                 <p>Design and send SMS campaigns to your audience.</p>

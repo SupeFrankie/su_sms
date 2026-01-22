@@ -52,7 +52,7 @@
                         <group string="Upload CSV File">
                             <field name="import_file" filename="import_filename"/>
                             <field name="import_filename" invisible="1"/>
-                            <div class="alert alert-info">
+                            <div class="alert alert-info" role="alert">
                                 <p><strong>CSV Format Required:</strong></p>
                                 <ul>
                                     <li>Columns: name, number</li>
