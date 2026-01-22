@@ -16,14 +16,12 @@ Author: Francis Martine Nyabuto Agata
 Contact: SupeFrankie@github.com
 """
 
+import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Force load the .env file from the Odoo root directory
+load_dotenv('/home/francis/Desktop/odoo/.env')
 
-
-# Import subpackages
 from . import models
-from . import wizard
 from . import controllers
-
-__all__ = ["models", "wizard", "controllers"]
+from . import wizard

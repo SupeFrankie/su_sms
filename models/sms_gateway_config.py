@@ -1,168 +1,130 @@
-# models/sms_gateway_config.py
-
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
-import requests
-import logging
-import time
 import os
+import requests
+import json
+import logging
 
 _logger = logging.getLogger(__name__)
-
 
 class SmsGatewayConfiguration(models.Model):
     _name = 'sms.gateway.configuration'
     _description = 'SMS Gateway Configuration'
 
-    name = fields.Char(required=True, default="Africa's Talking Gateway")
+    name = fields.Char(required=True)
     gateway_type = fields.Selection([
-        ('africastalking', 'Africa\'s Talking'),
-        ('custom', 'Custom API')
+        ('africastalking', "Africa's Talking"),
+        ('other', "Other")
     ], default='africastalking', required=True)
     
+    is_default = fields.Boolean(string="Default Gateway")
     active = fields.Boolean(default=True)
-    is_default = fields.Boolean(default=False)
-    
-    request_method = fields.Selection([
-        ('GET', 'GET'),
-        ('POST', 'POST')
-    ], default='POST')
-    
-    @api.constrains('is_default')
-    def _check_default_gateway(self):
-        for record in self:
-            if record.is_default:
-                other_defaults = self.search([
-                    ('is_default', '=', True),
-                    ('id', '!=', record.id)
-                ])
-                if other_defaults:
-                    other_defaults.write({'is_default': False})
-    
-    def _get_env_config(self):
-        return {
-            'username': os.getenv('AT_USERNAME', 'sandbox'),
-            'api_key': os.getenv('AT_API_KEY'),
-            'sender_id': os.getenv('AT_SENDER_ID', 'STRATHU'),
-            'environment': os.getenv('AT_ENVIRONMENT', 'production')
-        }
-    
+
+    # Computed fields reading from .env
+    api_key = fields.Char(string="API Key", compute="_compute_credentials", store=False)
+    username = fields.Char(string="Username", compute="_compute_credentials", store=False)
+    sender_id = fields.Char(string="Sender ID", compute="_compute_credentials", store=False)
+    environment = fields.Char(string="Environment", compute="_compute_credentials", store=False)
+
+    def _compute_credentials(self):
+        for rec in self:
+            if rec.gateway_type == 'africastalking':
+                # .strip() removes accidental spaces from the .env file
+                rec.api_key = (os.getenv('AT_API_KEY') or '').strip()
+                rec.username = (os.getenv('AT_USERNAME') or '').strip()
+                rec.sender_id = (os.getenv('AT_SENDER_ID') or '').strip()
+                rec.environment = (os.getenv('AT_ENVIRONMENT') or 'sandbox').strip()
+            else:
+                rec.api_key = False
+                rec.username = False
+                rec.sender_id = False
+                rec.environment = False
+   
+    @api.model
+    def get_default_gateway(self):
+        """Retrieve the default gateway configuration."""
+        # Try to find one marked as default
+        gateway = self.search([('is_default', '=', True)], limit=1)
+        
+        # If no default, just take the first active one
+        if not gateway:
+            gateway = self.search([], limit=1)
+            
+        if not gateway:
+            raise models.ValidationError(
+                "No SMS Gateway configured! Please go to Configuration -> Gateway Configuration and create one."
+            )
+        return gateway
+
     def send_sms(self, phone_number, message):
+        """
+        Main entry point called by sms.campaign
+        """
         self.ensure_one()
         
-        max_retries = 3
+        if self.gateway_type == 'africastalking':
+            return self._send_africastalking(phone_number, message)
+        else:
+            return False, "Gateway type not supported yet."
+
+    def _send_africastalking(self, phone, message):
+        # --- DEBUG LOGGING (Check your terminal after clicking Send) ---
+        masked_key = f"{self.api_key[:5]}...{self.api_key[-5:]}" if self.api_key else "MISSING"
+        _logger.info(f" AUTH CHECK -> Username: '{self.username}' | Environment: '{self.environment}' | Key: {masked_key}")
         
-        for attempt in range(max_retries):
-            try:
-                if self.gateway_type == 'africastalking':
-                    return self._send_africastalking(phone_number, message)
-                else:
-                    return False, "Custom gateway not implemented"
 
-            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-                _logger.warning(f"Network error (Attempt {attempt + 1}/{max_retries}): {str(e)}")
-                
-                if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)
-                    continue
-                else:
-                    return False, f"Network failed after {max_retries} attempts: {str(e)}"
-            
-            except Exception as e:
-                return False, str(e)
-    
-    def _send_africastalking(self, phone_number, message):
+        if not self.api_key:
+            return False, "Configuration Error: API Key not found. Check .env file."
+
+        # Select URL
+        if self.environment == 'production':
+            url = "https://api.africastalking.com/version1/messaging"
+        else:
+            url = "https://api.sandbox.africastalking.com/version1/messaging"
+
+        headers = {
+            'ApiKey': self.api_key,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+        }
+
+        data = {
+            'username': self.username, # <--- This MUST match the App Name
+            'to': phone,
+            'message': message
+        }
+
+        if self.sender_id and self.sender_id.lower() != 'none':
+            data['from'] = self.sender_id
+
         try:
-            config = self._get_env_config()
+            _logger.info(f"Sending SMS via AT to {phone}...")
+            response = requests.post(url, headers=headers, data=data)
             
-            if not config['api_key']:
-                raise ValidationError(
-                    'AT_API_KEY not found in environment variables. '
-                    'Please configure .env file.'
-                )
-            
-            is_sandbox = config['environment'] == 'sandbox'
-            url = 'https://api.sandbox.africastalking.com/version1/messaging' if is_sandbox else \
-                  'https://api.africastalking.com/version1/messaging'
+            if response.status_code == 401:
+                _logger.error(f" AUTH FAILED: The API rejected username '{self.username}' with the provided key.")
+                return False, "Authentication Failed: Username/Key mismatch. Check Server Logs."
 
-            phone = phone_number.strip()
-            if not phone.startswith('+'):
-                if phone.startswith('0'):
-                    phone = '+254' + phone[1:]
-                else:
-                    phone = '+254' + phone
+            if response.status_code not in [200, 201]:
+                return False, f"HTTP Error {response.status_code}: {response.text}"
 
-            data = {
-                'username': config['username'],
-                'to': phone,
-                'message': message,
-            }
+            return True, "Message Sent Successfully"
 
-            if config['sender_id'] and not is_sandbox:
-                data['from'] = config['sender_id']
-
-            headers = {
-                'apiKey': config['api_key'],
-                'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-
-            _logger.info(f"Sending SMS to {phone} via {url}")
-
-            response = requests.post(url, headers=headers, data=data, timeout=30, verify=True)
-            response.raise_for_status()
-            result = response.json()
-
-            sms_data = result.get('SMSMessageData', {})
-            recipients = sms_data.get('Recipients', [])
-            
-            if recipients:
-                return True, result
-            else:
-                error_msg = sms_data.get('Message', 'Unknown error')
-                return False, error_msg
-
-        except requests.exceptions.HTTPError as e:
-            _logger.error(f"HTTP Error: {e.response.status_code} - {e.response.text}")
-            return False, f"HTTP {e.response.status_code}: {e.response.text}"
         except Exception as e:
-            _logger.error(f"Error: {str(e)}")
+            _logger.exception("Failed to send SMS")
             return False, str(e)
-    
+
     def test_connection(self):
         self.ensure_one()
+        if not self.api_key:
+            raise models.ValidationError("API Key missing in .env file!")
         
-        test_number = self.env.user.partner_id.mobile or self.env.user.partner_id.phone
-        
-        if not test_number:
-            raise ValidationError(
-                "Current user has no mobile/phone number in profile. "
-                "Please add one to test."
-            )
-
-        test_message = f"Test SMS from {self.name}. Sent by {self.env.user.name}."
-        
-        success, result = self.send_sms(test_number, test_message)
-        
-        if success:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': 'Success',
-                    'message': f'Test SMS sent to {test_number}!',
-                    'type': 'success',
-                    'sticky': False,
-                }
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Connection Test',
+                'message': f'Credentials Loaded! Env: {self.environment}',
+                'type': 'success',
+                'sticky': False,
             }
-        else:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': 'Error',
-                    'message': f'Failed: {result}',
-                    'type': 'danger',
-                    'sticky': True,
-                }
-            }
+        }

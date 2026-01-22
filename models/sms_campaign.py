@@ -1,12 +1,14 @@
-# models/sms_campaign.py - REWRITE based on old_su_sms manual
+# models/sms_campaign.py
 
 from odoo import models, fields, api, exceptions, _
+from odoo.exceptions import UserError, ValidationError
 import logging
 import base64
 import csv
 import io
 
 _logger = logging.getLogger(__name__)
+
 
 class SMSCampaign(models.Model):
     _name = 'sms.campaign'
@@ -75,10 +77,7 @@ class SMSCampaign(models.Model):
     gateway_id = fields.Many2one(
         'sms.gateway.configuration', 
         'SMS Gateway',
-        default=lambda self: self.env['sms.gateway.configuration'].search([
-            ('is_default', '=', True),
-            ('active', '=', True)
-        ], limit=1)
+        help='Gateway to use for sending (leave empty for default)'
     )
     
     administrator_id = fields.Many2one(
@@ -115,7 +114,9 @@ class SMSCampaign(models.Model):
     def _compute_recipient_count(self):
         for campaign in self:
             campaign.total_recipients = len(campaign.recipient_ids)
-            campaign.pending_count = len(campaign.recipient_ids.filtered(lambda r: r.status == 'pending'))
+            campaign.pending_count = len(
+                campaign.recipient_ids.filtered(lambda r: r.status == 'pending')
+            )
     
     @api.depends('sent_count', 'total_recipients')
     def _compute_success_rate(self):
@@ -130,17 +131,58 @@ class SMSCampaign(models.Model):
         for campaign in self:
             campaign.total_cost = sum(campaign.recipient_ids.mapped('cost'))
     
+    def _get_gateway(self):
+        """
+        Get SMS gateway for this campaign with fallback logic
+        
+        Priority:
+        1. Campaign's assigned gateway
+        2. Default active gateway
+        3. Create from .env
+        
+        Returns:
+            recordset: Gateway configuration
+        
+        Raises:
+            UserError: If no gateway can be found or created
+        """
+        self.ensure_one()
+        
+        # Try campaign's assigned gateway
+        if self.gateway_id and self.gateway_id.active:
+            _logger.info('Using campaign gateway: %s', self.gateway_id.name)
+            return self.gateway_id
+        
+        # Try to get default gateway (includes .env fallback)
+        try:
+            gateway = self.env['sms.gateway.configuration'].get_default_gateway()
+            _logger.info('Using default gateway: %s', gateway.name)
+            return gateway
+        except UserError as e:
+            _logger.error('No gateway available: %s', str(e))
+            raise
+    
     def action_prepare_recipients(self):
+        """Prepare recipients based on target type"""
         self.ensure_one()
         
         # Check user permissions
         if not self._check_user_permission():
-            raise exceptions.UserError(_('You do not have permission to send to this audience.'))
+            raise UserError(
+                _('You do not have permission to send to this audience.\n\n'
+                  'Your role: %s\n'
+                  'Target: %s') % (
+                    self.env.user.sms_role or 'None',
+                    dict(self._fields['target_type'].selection).get(self.target_type)
+                )
+            )
         
+        # Clear existing recipients
         self.recipient_ids.unlink()
         
         recipients_data = []
         
+        # Route to appropriate method
         if self.target_type == 'all_students':
             recipients_data = self._get_all_students()
         
@@ -165,8 +207,11 @@ class SMSCampaign(models.Model):
         elif self.target_type == 'manual':
             recipients_data = self._process_manual_numbers()
         
+        # Create recipients
         if recipients_data:
             self.env['sms.recipient'].create(recipients_data)
+            _logger.info('Prepared %d recipients for campaign %s', 
+                        len(recipients_data), self.name)
             
         return {
             'type': 'ir.actions.client',
@@ -269,7 +314,7 @@ class SMSCampaign(models.Model):
     def _get_department_contacts(self):
         """Get contacts from specific department"""
         if not self.department_id:
-            raise exceptions.UserError(_("Please select a department"))
+            raise UserError(_("Please select a department"))
         
         recipients = []
         contacts = self.env['sms.contact'].search([
@@ -314,7 +359,7 @@ class SMSCampaign(models.Model):
     def _get_club_members(self):
         """Get club members"""
         if not self.club_id:
-            raise exceptions.UserError(_("Please select a club"))
+            raise UserError(_("Please select a club"))
         
         recipients = []
         for contact in self.club_id.member_ids:
@@ -332,7 +377,7 @@ class SMSCampaign(models.Model):
     def _get_mailing_list_contacts(self):
         """Get mailing list contacts"""
         if not self.mailing_list_id:
-            raise exceptions.UserError(_("Please select a mailing list"))
+            raise UserError(_("Please select a mailing list"))
         
         recipients = []
         for contact in self.mailing_list_id.contact_ids:
@@ -349,7 +394,7 @@ class SMSCampaign(models.Model):
     def _process_adhoc_csv(self):
         """Process CSV file with name,number format"""
         if not self.import_file:
-            raise exceptions.UserError(_("Please upload a CSV file"))
+            raise UserError(_("Please upload a CSV file"))
         
         recipients = []
         errors = []
@@ -387,17 +432,17 @@ class SMSCampaign(models.Model):
                 error_msg = '\n'.join(errors[:10])
                 if len(errors) > 10:
                     error_msg += _('\n... and %d more errors') % (len(errors) - 10)
-                raise exceptions.UserError(error_msg)
+                raise UserError(error_msg)
         
         except Exception as e:
-            raise exceptions.UserError(_('Error processing CSV file: %s') % str(e))
+            raise UserError(_('Error processing CSV file: %s') % str(e))
         
         return recipients
     
     def _process_manual_numbers(self):
         """Process comma-separated manual numbers"""
         if not self.manual_numbers:
-            raise exceptions.UserError(_("Please enter phone numbers"))
+            raise UserError(_("Please enter phone numbers"))
         
         recipients = []
         numbers = [n.strip() for n in self.manual_numbers.split(',')]
@@ -418,24 +463,61 @@ class SMSCampaign(models.Model):
         return not self.env['sms.blacklist'].is_blacklisted(phone)
     
     def action_send(self):
-        """Send SMS campaign"""
+        """
+        Send SMS campaign
+        
+        This method:
+        1. Gets the appropriate gateway
+        2. Validates recipients exist
+        3. Sends SMS to all pending recipients
+        4. Updates campaign status
+        
+        Returns:
+            dict: Notification action
+        """
         self.ensure_one()
         
         if not self.recipient_ids:
-            raise exceptions.UserError(_("No recipients! Please prepare recipients first."))
+            raise UserError(_("No recipients! Please prepare recipients first."))
         
-        if not self.gateway_id:
-            raise exceptions.UserError(_("No SMS gateway configured!"))
+        # Get gateway with fallback to .env
+        try:
+            gateway = self._get_gateway()
+        except UserError as e:
+            raise UserError(
+                _('Cannot send SMS: %s\n\n'
+                  'Please configure gateway:\n'
+                  'SMS System → Configuration → Gateway Configuration') % str(e)
+            )
         
+        _logger.info('Starting campaign %s with gateway %s', self.name, gateway.name)
+        
+        # Update campaign status
         self.status = 'in_progress'
         
+        # Get pending recipients
         pending_recipients = self.recipient_ids.filtered(lambda r: r.status == 'pending')
         
+        if not pending_recipients:
+            raise UserError(_("No pending recipients to send to!"))
+        
+        # Process in batches to avoid timeout
         batch_size = 100
-        for i in range(0, len(pending_recipients), batch_size):
-            batch = pending_recipients[i:i+batch_size]
+        total_batches = (len(pending_recipients) + batch_size - 1) // batch_size
+        
+        _logger.info('Processing %d recipients in %d batches', 
+                    len(pending_recipients), total_batches)
+        
+        for batch_num in range(total_batches):
+            start_idx = batch_num * batch_size
+            end_idx = min(start_idx + batch_size, len(pending_recipients))
+            batch = pending_recipients[start_idx:end_idx]
+            
+            _logger.info('Processing batch %d/%d (%d recipients)', 
+                        batch_num + 1, total_batches, len(batch))
             
             for recipient in batch:
+                # Prepare message (with personalization if enabled)
                 message = self.message
                 
                 if self.personalized:
@@ -446,38 +528,60 @@ class SMSCampaign(models.Model):
                 else:
                     recipient.personalized_message = message
                 
+                # Send SMS via gateway
                 try:
-                    success, result = self.gateway_id.send_sms(recipient.phone_number, message)
+                    success, result = gateway.send_sms(recipient.phone_number, message)
                     
                     if success:
                         recipient.write({
                             'status': 'sent',
-                            'sent_date': fields.Datetime.now()
+                            'sent_date': fields.Datetime.now(),
+                            'cost': 1.0  # Default cost, can be updated from gateway response
                         })
                         self.sent_count += 1
+                        _logger.debug(' Sent to %s', recipient.phone_number)
                     else:
                         recipient.write({
                             'status': 'failed',
                             'error_message': str(result)
                         })
                         self.failed_count += 1
+                        _logger.warning(' Failed to %s: %s', recipient.phone_number, result)
                         
                 except Exception as e:
-                    _logger.error(f"Error sending SMS to {recipient.phone_number}: {str(e)}")
+                    _logger.error('Error sending SMS to %s: %s', 
+                                recipient.phone_number, str(e), exc_info=True)
                     recipient.write({
                         'status': 'failed',
                         'error_message': str(e)
                     })
                     self.failed_count += 1
         
-        self.status = 'completed'
+        # Update final campaign status
+        if self.sent_count == len(self.recipient_ids):
+            self.status = 'completed'
+        elif self.sent_count > 0:
+            self.status = 'completed'  # Partial success still counts as completed
+        else:
+            self.status = 'failed'
+        
+        _logger.info('Campaign %s finished: %d sent, %d failed', 
+                    self.name, self.sent_count, self.failed_count)
         
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'message': _('Campaign completed! %d sent, %d failed') % (self.sent_count, self.failed_count),
-                'type': 'success',
+                'title': _('Campaign Completed'),
+                'message': _('Campaign completed!\n\n'
+                           'Sent: %d\n'
+                           'Failed: %d\n'
+                           'Success Rate: %.1f%%') % (
+                    self.sent_count, 
+                    self.failed_count,
+                    self.success_rate
+                ),
+                'type': 'success' if self.status == 'completed' else 'warning',
                 'sticky': True,
             }
         }
@@ -487,12 +591,23 @@ class SMSCampaign(models.Model):
         self.ensure_one()
         
         if not self.schedule_date:
-            raise exceptions.UserError(_("Please set a schedule date first!"))
+            raise UserError(_("Please set a schedule date first!"))
         
         if not self.recipient_ids:
-            raise exceptions.UserError(_("No recipients! Please prepare recipients first."))
+            raise UserError(_("No recipients! Please prepare recipients first."))
+        
+        # Validate gateway exists
+        try:
+            self._get_gateway()
+        except UserError as e:
+            raise UserError(
+                _('Cannot schedule: %s\n\n'
+                  'Please configure gateway before scheduling.') % str(e)
+            )
         
         self.status = 'scheduled'
+        
+        _logger.info('Campaign %s scheduled for %s', self.name, self.schedule_date)
         
         return {
             'type': 'ir.actions.client',
@@ -508,6 +623,8 @@ class SMSCampaign(models.Model):
         self.ensure_one()
         self.status = 'cancelled'
         
+        _logger.info('Campaign %s cancelled by %s', self.name, self.env.user.name)
+        
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
@@ -516,3 +633,31 @@ class SMSCampaign(models.Model):
                 'type': 'info',
             }
         }
+    
+    @api.model
+    def cron_send_scheduled(self):
+        """
+        Cron job to send scheduled campaigns
+        
+        This should be called by a scheduled action to process
+        campaigns with status='scheduled' and schedule_date <= now
+        """
+        now = fields.Datetime.now()
+        
+        scheduled_campaigns = self.search([
+            ('status', '=', 'scheduled'),
+            ('schedule_date', '<=', now)
+        ])
+        
+        _logger.info('Found %d scheduled campaigns to send', len(scheduled_campaigns))
+        
+        for campaign in scheduled_campaigns:
+            try:
+                _logger.info('Sending scheduled campaign: %s', campaign.name)
+                campaign.action_send()
+            except Exception as e:
+                _logger.error('Failed to send scheduled campaign %s: %s', 
+                            campaign.name, str(e), exc_info=True)
+                campaign.write({
+                    'status': 'failed',
+                })

@@ -58,6 +58,7 @@
         
         # Base data (dependencies for other files)
         'data/sms_type_data.xml',
+        'data/gateway_data.xml',
         
         # --- LOAD WIZARDS EARLY (Dependencies for Views) ---
         'wizard/sms_composer_views.xml', 
@@ -94,6 +95,11 @@
         'data/sms_template_data.xml',
         'views/opt_out_templates.xml'
     ],
+    
+    'external_dependencies': {
+        'python': ['dotenv'],
+    },
+    
     'demo': [
         'data/demo_data.xml',
     ],

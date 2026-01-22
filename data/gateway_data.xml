@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- This will create gateway from .env on module install -->
+        <function model="sms.gateway.configuration" name="create_from_env"/>
+    </data>
+</odoo>
