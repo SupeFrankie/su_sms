@@ -1,19 +1,12 @@
-# models/sms_compose_wizard.py 
-
-"""
-Basicaly allows selection types for (1)Adhoc sms(2)Staff sms(3)Manual sms(4)Student sms
-
-Different from models/sms_composer.py 
-"""
+# wizard/sms_compose_wizard.py
 
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 class SMSComposeWizard(models.TransientModel):
     _name = 'sms.compose.wizard'
-    _description = 'SMS Compose Wizard (5 Steps)'
+    _description = 'SMS Compose Wizard'
     
-    # Step 1: Select SMS Type
     sms_type = fields.Selection([
         ('adhoc', 'Ad Hoc SMS'),
         ('student', 'Student SMS'),
@@ -21,38 +14,34 @@ class SMSComposeWizard(models.TransientModel):
         ('manual', 'Manual SMS'),
     ], string='SMS Type', required=True)
     
-    # Step 2: Configure Recipients
-    # For Ad Hoc
     import_file = fields.Binary(string='CSV File')
     import_filename = fields.Char()
     
-    # For Manual
     manual_numbers = fields.Text(string='Phone Numbers')
     
-    # For Students
     school_id = fields.Many2one('hr.department', string='School',
                                 domain=[('is_school', '=', True)])
     program_id = fields.Many2one('student.program', string='Program')
     course_id = fields.Many2one('student.course', string='Course')
     
-    # For Staff
     department_id = fields.Many2one('hr.department', string='Department')
-   
-    # Step 3: Preview Recipients
+    gender = fields.Selection([
+        ('all', 'All'),
+        ('male', 'Male'),
+        ('female', 'Female')
+    ], string='Gender', default='all')
+    
     preview_recipient_ids = fields.Many2many('sms.recipient', string='Preview Recipients')
     recipient_count = fields.Integer(compute='_compute_recipient_count')
     
-    # Step 4: Compose Message
     message = fields.Text(string='Message', required=True)
     message_length = fields.Integer(compute='_compute_message_length')
     sms_count = fields.Integer(compute='_compute_sms_count')
     template_id = fields.Many2one('sms.template', string='Use Template')
     
-    # Step 5: Review & Send
     gateway_id = fields.Many2one('sms.gateway.configuration', string='Gateway')
     estimated_cost = fields.Float(compute='_compute_estimated_cost')
     
-    # Wizard State
     current_step = fields.Selection([
         ('1', 'Select Type'),
         ('2', 'Configure Recipients'),
@@ -90,7 +79,7 @@ class SMSComposeWizard(models.TransientModel):
     @api.onchange('template_id')
     def _onchange_template_id(self):
         if self.template_id:
-            self.message = self.template_id.message
+            self.message = self.template_id.body
     
     def action_next_step(self):
         self.ensure_one()
@@ -161,19 +150,23 @@ class SMSComposeWizard(models.TransientModel):
             'name': f"{self.sms_type.upper()} SMS - {fields.Datetime.now()}",
             'message': self.message,
             'sms_type_id': self.env['sms.type'].search([('code', '=', self.sms_type)], limit=1).id,
-            'gateway_id': self.gateway_id.id,
+            'gateway_id': self.gateway_id.id if self.gateway_id else False,
             'recipient_ids': [(0, 0, {
                 'name': r.name,
                 'phone_number': r.phone_number,
             }) for r in self.preview_recipient_ids],
         })
         
-        campaign.action_send()
-        
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'sms.campaign',
-            'res_id': campaign.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
+        try:
+            campaign.action_send()
+            self.unlink()
+            
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'sms.campaign',
+                'res_id': campaign.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+        except Exception as e:
+            raise UserError(str(e))
