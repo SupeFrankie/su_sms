@@ -101,12 +101,5 @@
                 <p>Mailing lists help you organize contacts into groups for targeted SMS campaigns.</p>
             </field>
         </record>
-
-        <!-- Menu Item -->
-        <menuitem id="menu_sms_mailing_lists" 
-                  name="Mailing Lists" 
-                  parent="menu_sms_main" 
-                  action="action_sms_mailing_list" 
-                  sequence="30"/>
     </data>
 </odoo>

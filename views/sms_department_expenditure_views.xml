@@ -1,4 +1,3 @@
-<!-- views/sms_department_expenditure_views.xml - NEW -->
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
@@ -52,13 +51,5 @@
             <field name="view_mode">list</field>
             <field name="context">{'search_default_current_month': 1}</field>
         </record>
-
-        <!-- Menu Item -->
-        <menuitem id="menu_sms_department_expenditure"
-                  name="Department Expenditure"
-                  parent="menu_sms_marketing_config"
-                  action="action_sms_department_expenditure"
-                  sequence="30"
-                  groups="group_sms_system_admin"/>
     </data>
 </odoo>

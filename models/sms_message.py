@@ -26,7 +26,7 @@ class SMSMessage(models.Model):
     department_id = fields.Many2one(related='administrator_id.department_id', 
                                     string='Department', store=True, readonly=True)
     
-    detail_ids = fields.One2many('sms.detail', 'message_id', string='Recipients')
+    detail_ids = fields.One2many('sms.detail', 'message_id', string='Recipient List')
     
     kfs5_processed = fields.Boolean(string='KFS5 Processed', default=False, tracking=True)
     kfs5_processed_date = fields.Datetime(string='KFS5 Process Date', readonly=True)

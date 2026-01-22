@@ -101,11 +101,11 @@
             <field name="view_mode">form,list</field>
             <field name="view_id" ref="view_sms_adhoc_form"/>
             <field name="target">current</field>
-            <field name="context">{
-                'default_sms_type_id': ref('sms_type_adhoc'),
-                'default_target_type': 'adhoc',
-                'default_name': 'Ad Hoc SMS Campaign',
-            }</field>
+            <field name="context" eval="{
+                    'default_sms_type_id': ref('sms_type_adhoc'),
+                    'default_target_type': 'adhoc',
+                    'default_name': 'Ad Hoc SMS Campaign',
+             }"/>
         </record>
     </data>
 </odoo>

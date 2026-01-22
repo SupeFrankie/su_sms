@@ -59,7 +59,7 @@ class SmsRecipient(models.Model):
 
     currency_id = fields.Many2one(
         'res.currency',
-        default=lambda self: self.env.company.currency_id
+        default=lambda self: self.env.company.currency_id.id
     )
 
     department = fields.Char(help='Department name')
@@ -88,6 +88,8 @@ class SmsRecipient(models.Model):
 
         phone = re.sub(r'\s+', '', phone)
 
+        if phone.startswith('+254'):
+            return phone
         if phone.startswith('+'):
             return phone
         if phone.startswith('0'):
@@ -96,9 +98,15 @@ class SmsRecipient(models.Model):
             return '+254' + phone
 
         raise ValidationError(f'Invalid phone number: {phone}')
+    
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('phone_number'):
+                vals['phone_number'] = self.normalize_phone(vals['phone_number'])
+        return super().create(vals_list)
 
-    @api.constrains('phone_number')
-    def _check_phone(self):
-        for rec in self:
-            if rec.phone_number:
-                rec.phone_number = self.normalize_phone(rec.phone_number)
+    def write(self, vals):
+        if vals.get('phone_number'):
+            vals['phone_number'] = self.normalize_phone(vals['phone_number'])
+        return super().write(vals)

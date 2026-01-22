@@ -1,4 +1,3 @@
-<!-- views/sms_campaign_views.xml - UPDATE with improved UI -->
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
@@ -127,7 +126,7 @@
                                         </div>
                                     </group>
                                     <group>
-                                        <label string="SMS Parts"/>
+                                        <label for= "message_length" string="SMS Parts"/>
                                         <div>
                                             <field name="message_length" readonly="1" widget="sms_parts" class="oe_inline"/>
                                         </div>
@@ -232,12 +231,5 @@
                 <p>Design and send SMS campaigns to your audience.</p>
             </field>
         </record>
-
-        <!-- Menu Item -->
-        <menuitem id="menu_sms_campaigns_all"
-                  name="All Campaigns"
-                  parent="menu_sms_main"
-                  action="action_sms_campaign_all"
-                  sequence="10"/>
     </data>
 </odoo>

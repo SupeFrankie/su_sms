@@ -10,21 +10,44 @@ Order of import matters because of dependencies:
 3. Finally messages and templates
 """
 
+"""
+Models Package - Import Order Matters!
+"""
+
+# Base models first (no dependencies)
 from . import sms_type
-from . import sms_department
-from . import sms_administrator
-from . import sms_message
-from . import sms_detail
 from . import sms_blacklist
 from . import sms_gateway_config
-from . import sms_contact
-from . import sms_template
-from . import sms_mailing_list
-from . import sms_campaign
-from . import sms_recipient
+
+# Models with basic dependencies
+from . import hr_department
 from . import res_partner
 from . import res_users
-from . import hr_department
+
+# Contact and related models
+from . import sms_contact
+
+# Templates
+from . import sms_template
+
+# Mailing lists (depends on contacts)
+from . import sms_mailing_list
+
+# Campaigns and recipients
+from . import sms_campaign
+from . import sms_recipient
+
+# Department and administrator models
+from . import sms_department
+from . import sms_administrator
+
+# Message models
+from . import sms_message
+from . import sms_detail
+
+# Filter wizards
 from . import sms_staff_filter
 from . import sms_student_filter
+
+# Expenditure reporting
 from . import sms_department_expenditure

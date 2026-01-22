@@ -30,7 +30,8 @@ class SMSComposeWizard(models.TransientModel):
     manual_numbers = fields.Text(string='Phone Numbers')
     
     # For Students
-    school_id = fields.Many2one('student.school', string='School')
+    school_id = fields.Many2one('hr.department', string='School',
+                                domain=[('is_school', '=', True)])
     program_id = fields.Many2one('student.program', string='Program')
     course_id = fields.Many2one('student.course', string='Course')
     

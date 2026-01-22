@@ -1,6 +1,7 @@
 # models/sms_department.py
 
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 class SMSDepartment(models.Model):
     _name = 'sms.department'
@@ -22,9 +23,15 @@ class SMSDepartment(models.Model):
                                store=True)
     message_count = fields.Integer(string='Messages Sent', compute='_compute_message_count')
     
-    _sql_constraints = [
-        ('short_name_unique', 'unique(short_name)', 'Department short name must be unique!')
-    ]
+    @api.constrains('short_name')
+    def _check_unique_short_name(self):
+        for record in self:
+            existing = self.search([
+                ('short_name', '=', record.short_name),
+                ('id', '!=', record.id)
+            ], limit=1)
+            if existing:
+                raise ValidationError(f'Department short name "{record.short_name}" must be unique!')
     
     @api.depends('administrator_ids.message_ids.total_cost')
     def _compute_total_spent(self):

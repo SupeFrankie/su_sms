@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 class SMSType(models.Model):
     _name = 'sms.type'
@@ -11,6 +12,12 @@ class SMSType(models.Model):
     description = fields.Text(string='Description')
     active = fields.Boolean(default=True)
     
-    _sql_constraints = [
-        ('code_unique', 'unique(code)', 'SMS Type code must be unique!')
-    ]
+    @api.constrains('code')
+    def _check_unique_code(self):
+        for record in self:
+            existing = self.search([
+                ('code', '=', record.code),
+                ('id', '!=', record.id)
+            ], limit=1)
+            if existing:
+                raise ValidationError(f'SMS Type code "{record.code}" must be unique!')

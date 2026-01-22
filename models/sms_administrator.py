@@ -1,5 +1,7 @@
 # models/sms_administrator.py (accounts for who can send sms from where to where)
+
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 class SMSAdministrator(models.Model):
     _name = 'sms.administrator'
@@ -10,7 +12,7 @@ class SMSAdministrator(models.Model):
                               ondelete='cascade', index=True)
     department_id = fields.Many2one('sms.department', string='Finance Department', 
                                     required=True, ondelete='restrict')
-    phone = fields.Char(string='Phone Number', 
+    phone = fields.Char(string='Admin Phone', 
                         help='Administrator phone (receives copy of sent SMS)')
     active = fields.Boolean(default=True)
     
@@ -21,9 +23,15 @@ class SMSAdministrator(models.Model):
     name = fields.Char(related='user_id.name', string='Name', store=True, readonly=True)
     email = fields.Char(related='user_id.email', string='Email', readonly=True)
     
-    _sql_constraints = [
-        ('user_unique', 'unique(user_id)', 'A user can only have one SMS administrator record!')
-    ]
+    @api.constrains('user_id')
+    def _check_unique_user(self):
+        for record in self:
+            existing = self.search([
+                ('user_id', '=', record.user_id.id),
+                ('id', '!=', record.id)
+            ], limit=1)
+            if existing:
+                raise ValidationError('A user can only have one SMS administrator record!')
     
     @api.depends('message_ids')
     def _compute_totals(self):

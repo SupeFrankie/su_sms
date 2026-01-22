@@ -62,7 +62,5 @@
                 <p>Add phone numbers to prevent sending SMS to them.</p>
             </field>
         </record>
-
-        <menuitem id="menu_sms_blacklist" name="Blacklist" parent="menu_sms_marketing_config" action="action_sms_blacklist" sequence="30"/>
     </data>
 </odoo>

@@ -1,5 +1,3 @@
-# security/ir.model.access.csv 
-
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_sms_contact_manager,sms.contact.manager,model_sms_contact,group_sms_system_admin,1,1,1,1
 access_sms_contact_admin,sms.contact.admin,model_sms_contact,group_sms_administrator,1,1,1,0
@@ -10,8 +8,8 @@ access_sms_mailing_list_manager,sms.mailing_list.manager,model_sms_mailing_list,
 access_sms_mailing_list_user,sms.mailing_list.user,model_sms_mailing_list,group_sms_basic_user,1,1,1,0
 access_sms_message_manager,sms.message.manager,model_sms_message,group_sms_system_admin,1,1,1,1
 access_sms_message_user,sms.message.user,model_sms_message,group_sms_basic_user,1,1,1,0
-access_sms_message_detail_manager,sms.message.detail.manager,model_sms_message_detail,group_sms_system_admin,1,1,1,1
-access_sms_message_detail_user,sms.message.detail.user,model_sms_message_detail,group_sms_basic_user,1,0,0,0
+access_sms_detail_manager,sms.detail.manager,model_sms_detail,group_sms_system_admin,1,1,1,1
+access_sms_detail_user,sms.detail.user,model_sms_detail,group_sms_basic_user,1,0,0,0
 access_sms_template_manager,sms.template.manager,model_sms_template,group_sms_system_admin,1,1,1,1
 access_sms_template_user,sms.template.user,model_sms_template,group_sms_basic_user,1,1,1,0
 access_sms_club_manager,sms.club.manager,model_sms_club,group_sms_system_admin,1,1,1,1
@@ -25,7 +23,7 @@ access_sms_recipient_user,sms.recipient.user,model_sms_recipient,group_sms_basic
 access_sms_gateway_manager,sms.gateway.manager,model_sms_gateway_configuration,group_sms_system_admin,1,1,1,1
 access_sms_gateway_user,sms.gateway.user,model_sms_gateway_configuration,group_sms_basic_user,1,0,0,0
 access_sms_type_system_admin,sms.type.system.admin,model_sms_type,group_sms_system_admin,1,1,1,1
-access_sms_type_all,sms.type.all,base.group_user,model_sms_type,1,0,0,0
+access_sms_type_all,sms.type.all,model_sms_type,base.group_user,1,0,0,0
 access_sms_staff_filter_all,sms.staff.filter.all,model_sms_staff_filter,base.group_user,1,1,1,1
 access_sms_student_filter_all,sms.student.filter.all,model_sms_student_filter,base.group_user,1,1,1,1
 access_student_program_all,student.program.all,model_student_program,base.group_user,1,0,0,0
@@ -43,3 +41,8 @@ access_student_intake_manager,student.intake.manager,model_student_intake,group_
 access_sms_department_expenditure_manager,sms.department.expenditure.manager,model_sms_department_expenditure,group_sms_system_admin,1,0,0,0
 access_import_recipients_all,import.recipients.all,model_import_sms_recipients,base.group_user,1,1,1,1
 access_sms_composer_all,sms.composer.all,model_sms_composer,base.group_user,1,1,1,1
+access_sms_department_all,sms.department.all,model_sms_department,base.group_user,1,0,0,0
+access_sms_department_manager,sms.department.manager,model_sms_department,group_sms_system_admin,1,1,1,1
+access_sms_administrator_all,sms.administrator.all,model_sms_administrator,base.group_user,1,0,0,0
+access_sms_administrator_manager,sms.administrator.manager,model_sms_administrator,group_sms_system_admin,1,1,1,1
+access_sms_compose_wizard,access_sms_compose_wizard,model_sms_compose_wizard,base.group_user,1,1,1,1

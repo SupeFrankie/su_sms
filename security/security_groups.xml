@@ -1,49 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Module Category -->
         <record id="module_category_sms" model="ir.module.category">
             <field name="name">SMS Marketing</field>
             <field name="description">Manage SMS campaigns and communications</field>
             <field name="sequence">15</field>
         </record>
 
-        <!-- Basic User - Can use Ad Hoc and Manual SMS -->
         <record id="group_sms_basic_user" model="res.groups">
             <field name="name">SMS Basic User</field>
-            <field name="category_id" ref="module_category_sms"/>
             <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
             <field name="comment">Can send Ad Hoc and Manual SMS only</field>
         </record>
 
-        <!-- Department Administrator - Can send to their department -->
         <record id="group_sms_department_admin" model="res.groups">
             <field name="name">SMS Department Administrator</field>
-            <field name="category_id" ref="module_category_sms"/>
             <field name="implied_ids" eval="[(4, ref('group_sms_basic_user'))]"/>
             <field name="comment">Can send Staff SMS to their department</field>
         </record>
 
-        <!-- Faculty Administrator - Can send to all students -->
         <record id="group_sms_faculty_admin" model="res.groups">
             <field name="name">SMS Faculty Administrator</field>
-            <field name="category_id" ref="module_category_sms"/>
             <field name="implied_ids" eval="[(4, ref('group_sms_basic_user'))]"/>
             <field name="comment">Can send Student SMS</field>
         </record>
 
-        <!-- Administrator - Can send to staff and students -->
         <record id="group_sms_administrator" model="res.groups">
             <field name="name">SMS Administrator</field>
-            <field name="category_id" ref="module_category_sms"/>
             <field name="implied_ids" eval="[(4, ref('group_sms_faculty_admin')), (4, ref('group_sms_department_admin'))]"/>
             <field name="comment">Full SMS access - Staff and Students</field>
         </record>
 
-        <!-- System Administrator - Full system configuration -->
         <record id="group_sms_system_admin" model="res.groups">
             <field name="name">SMS System Administrator</field>
-            <field name="category_id" ref="module_category_sms"/>
             <field name="implied_ids" eval="[(4, ref('group_sms_administrator'))]"/>
             <field name="comment">Can configure gateways, API keys, system settings</field>
         </record>

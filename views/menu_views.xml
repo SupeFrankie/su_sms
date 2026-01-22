@@ -1,76 +1,114 @@
-<!-- views/menu_views.xml -->
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Main SMS Marketing Root Menu -->
         <menuitem id="menu_sms_marketing_root"
                   name="SMS System"
                   web_icon="su_sms,static/description/icon.png"
                   sequence="5"/>
 
-        <!-- SMS Modules Submenu -->
         <menuitem id="menu_sms_modules"
                   name="SMS Modules"
                   parent="menu_sms_marketing_root"
                   sequence="10"/>
 
-        <!-- Staff SMS -->
-        <menuitem id="menu_sms_staff"
-                  name="Staff SMS"
-                  parent="menu_sms_modules"
-                  action="action_sms_staff"
-                  sequence="10"
-                  groups="group_sms_department_admin,group_sms_administrator,group_sms_system_admin"/>
+            <menuitem id="menu_sms_staff"
+                      name="Staff SMS"
+                      parent="menu_sms_modules"
+                      action="action_sms_staff"
+                      sequence="10"
+                      groups="group_sms_department_admin,group_sms_administrator,group_sms_system_admin"/>
 
-        <!-- Students SMS -->
-        <menuitem id="menu_sms_student"
-                  name="Students SMS"
-                  parent="menu_sms_modules"
-                  action="action_sms_student"
-                  sequence="20"
-                  groups="group_sms_faculty_admin,group_sms_administrator,group_sms_system_admin"/>
+            <menuitem id="menu_sms_student"
+                      name="Students SMS"
+                      parent="menu_sms_modules"
+                      action="action_sms_student"
+                      sequence="20"
+                      groups="group_sms_faculty_admin,group_sms_administrator,group_sms_system_admin"/>
 
-        <!-- Ad Hoc SMS -->
-        <menuitem id="menu_sms_adhoc"
-                  name="Ad Hoc SMS"
-                  parent="menu_sms_modules"
-                  action="action_sms_adhoc"
-                  sequence="30"/>
+            <menuitem id="menu_sms_adhoc"
+                      name="Ad Hoc SMS"
+                      parent="menu_sms_modules"
+                      action="action_sms_adhoc"
+                      sequence="30"/>
 
-        <!-- Manual SMS -->
-        <menuitem id="menu_sms_manual"
-                  name="Manual SMS"
-                  parent="menu_sms_modules"
-                  action="action_sms_manual"
-                  sequence="40"/>
+            <menuitem id="menu_sms_manual"
+                      name="Manual SMS"
+                      parent="menu_sms_modules"
+                      action="action_sms_manual"
+                      sequence="40"/>
 
-        <!-- Configuration Submenu -->
+        <menuitem id="menu_sms_main"
+                  name="SMS Management"
+                  parent="menu_sms_marketing_root"
+                  sequence="20"/>
+
+            <menuitem id="menu_sms_campaigns_all"
+                      name="All Campaigns"
+                      parent="menu_sms_main"
+                      action="action_sms_campaign_all"
+                      sequence="10"/>
+
+            <menuitem id="menu_sms_template"
+                      name="SMS Templates"
+                      parent="menu_sms_main"
+                      action="action_sms_template"
+                      sequence="15"/>
+
+            <menuitem id="menu_sms_contacts" 
+                      name="Contacts" 
+                      parent="menu_sms_main" 
+                      action="action_sms_contact" 
+                      sequence="20"/>
+
+            <menuitem id="menu_sms_mailing_lists" 
+                      name="Mailing Lists" 
+                      parent="menu_sms_main" 
+                      action="action_sms_mailing_list" 
+                      sequence="30"/>
+
+            <menuitem id="menu_sms_recipients" 
+                      name="Recipients" 
+                      parent="menu_sms_main" 
+                      action="action_sms_recipient" 
+                      sequence="50"/>
+
         <menuitem id="menu_sms_marketing_config"
                   name="Configuration"
                   parent="menu_sms_marketing_root"
                   sequence="90"
                   groups="group_sms_system_admin"/>
 
-        <!-- Departments -->
-        <menuitem id="menu_sms_departments"
-                  name="Departments"
-                  parent="menu_sms_marketing_config"
-                  action="hr.open_view_department_list"
-                  sequence="10"
-                  groups="group_sms_system_admin"/>
+            <menuitem id="menu_sms_gateway"
+                      name="Gateway Configuration"
+                      parent="menu_sms_marketing_config"
+                      action="action_sms_gateway_configuration"
+                      sequence="10"/>
 
-        <!-- Administrators/Users -->
-        <menuitem id="menu_sms_administrators"
-                  name="Administrators"
-                  parent="menu_sms_marketing_config"
-                  action="base.action_res_users"
-                  sequence="20"
-                  groups="group_sms_system_admin"/>
+            <menuitem id="menu_sms_departments"
+                      name="Departments"
+                      parent="menu_sms_marketing_config"
+                      action="hr.hr_department_kanban_action"
+                      sequence="15"
+                      groups="group_sms_system_admin"/>
 
-        <!-- SMS Management Submenu -->
-        <menuitem id="menu_sms_main"
-                  name="SMS Management"
-                  parent="menu_sms_marketing_root"
-                  sequence="20"/>
+            <menuitem id="menu_sms_administrators"
+                      name="Administrators"
+                      parent="menu_sms_marketing_config"
+                      action="base.action_res_users"
+                      sequence="20"
+                      groups="group_sms_system_admin"/>
+
+            <menuitem id="menu_sms_blacklist" 
+                      name="Blacklist" 
+                      parent="menu_sms_marketing_config" 
+                      action="action_sms_blacklist" 
+                      sequence="30"/>
+
+            <menuitem id="menu_sms_department_expenditure"
+                      name="Department Expenditure"
+                      parent="menu_sms_marketing_config"
+                      action="action_sms_department_expenditure"
+                      sequence="40"
+                      groups="group_sms_system_admin"/>
     </data>
 </odoo>

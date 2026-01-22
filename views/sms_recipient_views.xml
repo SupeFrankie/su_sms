@@ -72,7 +72,5 @@
                 <p>Recipients are added through campaigns.</p>
             </field>
         </record>
-
-        <menuitem id="menu_sms_recipients" name="Recipients" parent="menu_sms_marketing_campaigns" action="action_sms_recipient" sequence="20"/>
     </data>
 </odoo>

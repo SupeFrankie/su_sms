@@ -19,7 +19,7 @@ class ResUsers(models.Model):
         help='Department this user belongs to'
     )
     
-    @api.depends('groups_id')
+    #@api.depends('groups_id.users')
     def _compute_sms_role(self):
         """Compute SMS role based on security groups"""
         for user in self:
