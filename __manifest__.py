@@ -59,6 +59,9 @@
         'data/sms_type_data.xml',
         'data/gateway_data.xml',
         
+        # Scheduled actions (cron jobs)
+        'data/ir_cron.xml',
+        
         # --- LOAD WIZARDS EARLY (Dependencies for Views) ---
         'wizard/sms_composer_views.xml', 
         
@@ -95,7 +98,6 @@
         
         # Templates and other data 
         'data/sms_template_data.xml',
-        #'data/ir_cron.xml',
         'views/opt_out_templates.xml'
     ],
     

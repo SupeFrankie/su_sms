@@ -16,6 +16,8 @@ Models Package - Import Order Matters!
 from . import sms_type
 from . import sms_blacklist
 from . import sms_gateway_config
+from. import sms_credit
+
 
 # Balance reporting
 from . import sms_credit
@@ -40,6 +42,7 @@ from . import sms_mailing_list
 # Campaigns and recipients
 from . import sms_campaign
 from . import sms_recipient
+from . import sms_queue
 
 # Department and administrator models
 from . import sms_department

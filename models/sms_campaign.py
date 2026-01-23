@@ -173,6 +173,7 @@ class SMSCampaign(models.Model):
         elif self.target_type == 'all_departments':
             recipients_data = self._get_all_departments_contacts()
         
+        
         elif self.target_type == 'mailing_list':
             recipients_data = self._get_mailing_list_contacts()
         
@@ -340,6 +341,7 @@ class SMSCampaign(models.Model):
                 })
         
         return recipients
+    
     
     def _get_mailing_list_contacts(self):
         """Get mailing list contacts"""
@@ -552,33 +554,23 @@ class SMSCampaign(models.Model):
             }
         }
     
-    def action_download_csv_template(self):
+    def action_download_template(self):
         """
-        Download CSV template for ad hoc SMS
+        Download CSV template for Ad Hoc SMS
         PHP equivalent: DownloadsController::adhoc_sms_template()
         """
-        import base64
+        self.ensure_one()
         
-        # Create CSV template
+        # Create CSV content
         csv_content = "name,number\n"
         csv_content += "John Doe,+254712345678\n"
         csv_content += "Jane Smith,+254723456789\n"
         csv_content += "Bob Johnson,+254734567890\n"
         
-        # Encode to base64
-        csv_base64 = base64.b64encode(csv_content.encode('utf-8'))
-        
-        # Create attachment
-        attachment = self.env['ir.attachment'].create({
-            'name': 'sms_adhoc_template.csv',
-            'type': 'binary',
-            'datas': csv_base64,
-            'mimetype': 'text/csv',
-            'public': True,
-        })
-        
+        # Return as downloadable file
         return {
             'type': 'ir.actions.act_url',
-            'url': f'/web/content/{attachment.id}?download=true',
-            'target': 'new',
+            'url': f'data:text/csv;charset=utf-8;base64,{base64.b64encode(csv_content.encode()).decode()}',
+            'target': 'download',
+            'download': 'adhoc_sms_template.csv'
         }
