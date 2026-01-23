@@ -72,6 +72,7 @@
                                 <field name="sms_type_id" required="1" options="{'no_create': True}"/>
                                 <field name="target_type" required="1"/>
                                 <field name="administrator_id" required="1" options="{'no_create': True}"/>
+                                <field name="department_id" options="{'no_create': True}"/>
                                 <field name="gateway_id" required="1" options="{'no_create': True}"/>
                             </group>
                             <group>
