@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- SMS Contact List View -->
         <record id="view_sms_contact_list" model="ir.ui.view">
             <field name="name">sms.contact.list</field>
             <field name="model">sms.contact</field>
@@ -20,7 +19,6 @@
             </field>
         </record>
 
-        <!-- SMS Contact Form View -->
         <record id="view_sms_contact_form" model="ir.ui.view">
             <field name="name">sms.contact.form</field>
             <field name="model">sms.contact</field>
@@ -89,15 +87,6 @@
                                     </list>
                                 </field>
                             </page>
-                            <page string="Clubs">
-                                <field name="club_ids">
-                                    <list>
-                                        <field name="name"/>
-                                        <field name="code"/>
-                                        <field name="member_count"/>
-                                    </list>
-                                </field>
-                            </page>
                             <page string="Notes">
                                 <field name="notes" placeholder="Internal notes about this contact..."/>
                             </page>
@@ -107,7 +96,6 @@
             </field>
         </record>
 
-        <!-- SMS Contact Search View -->
         <record id="view_sms_contact_search" model="ir.ui.view">
             <field name="name">sms.contact.search</field>
             <field name="model">sms.contact</field>
@@ -138,7 +126,6 @@
             </field>
         </record>
 
-        <!-- SMS Contact Action -->
         <record id="action_sms_contact" model="ir.actions.act_window">
             <field name="name">SMS Contacts</field>
             <field name="res_model">sms.contact</field>

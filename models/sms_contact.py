@@ -32,7 +32,6 @@ class SMSContact(models.Model):
     contact_type = fields.Selection([
         ('student', 'Student'),
         ('staff', 'Staff'),
-        ('club', 'Club Member'),
         ('external', 'External')
     ], string='Contact Type', required=True, default='student',
        help='Type of contact for categorization')
@@ -47,12 +46,6 @@ class SMSContact(models.Model):
         'hr.department',
         string='Department',
         help='Department for staff or faculty for students'
-    )
-    
-    club_ids = fields.Many2many(
-        'sms.club',  
-        string='Clubs',
-        help='Clubs this contact belongs to'
     )
     
     tag_ids = fields.Many2many(
@@ -247,35 +240,6 @@ class SMSContact(models.Model):
                 vals['opt_out_date'] = fields.Datetime.now()
         
         return super(SMSContact, self).write(vals)
-
-
-class SMSClub(models.Model):
-    _name = 'sms.club'
-    _description = 'SMS Club'
-    _order = 'name'
-    
-    name = fields.Char(string='Club Name', required=True)
-    code = fields.Char(string='Code', help='Short code for the club')
-    description = fields.Text(string='Description')
-    
-    member_ids = fields.Many2many(
-        'sms.contact',
-        string='Club Members', 
-        help='Club members'
-    )
-    
-    member_count = fields.Integer(
-        string='Total Members',  
-        compute='_compute_member_count'
-    )
-    
-    active = fields.Boolean(default=True)
-    
-    @api.depends('member_ids')
-    def _compute_member_count(self):
-        for club in self:
-            club.member_count = len(club.member_ids)
-
 
 
 class SMSTag(models.Model):

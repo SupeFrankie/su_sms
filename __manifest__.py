@@ -49,7 +49,6 @@
                 'contacts', 
                 'web', 
                 'hr',
-                'mass_mailing_sms',
                 ],
     'data': [
         # Security FIRST

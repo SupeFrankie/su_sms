@@ -1,14 +1,12 @@
-# models/sms_campaign.py
+# models/sms_campaign.py 
 
-from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo import models, fields, api, exceptions, _
 import logging
 import base64
 import csv
 import io
 
 _logger = logging.getLogger(__name__)
-
 
 class SMSCampaign(models.Model):
     _name = 'sms.campaign'
@@ -25,13 +23,48 @@ class SMSCampaign(models.Model):
         ('completed', 'Completed'),
         ('failed', 'Failed'),
         ('cancelled', 'Cancelled'),
-    ], default='draft', tracking=True, string='Status')
+    ], compute='_compute_status', store=True, tracking=True, 
+       string='Status', readonly=True, copy=False)
+
+    state_manual = fields.Selection([
+        ('draft', 'Draft'),
+        ('scheduled', 'Scheduled'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    ], default='draft', string='Internal Status', copy=False)
+
+    @api.depends('recipient_ids.status', 'state_manual')
+    def _compute_status(self):
+        """Compute status from internal state or auto-compute from recipients"""
+        for campaign in self:
+            if campaign.state_manual in ['scheduled', 'in_progress', 'cancelled']:
+                campaign.status = campaign.state_manual
+                continue
+            
+            if campaign.recipient_ids:
+                sent = campaign.recipient_ids.filtered(lambda r: r.status == 'sent')
+                failed = campaign.recipient_ids.filtered(lambda r: r.status == 'failed')
+                total = len(campaign.recipient_ids)
+                
+                if len(sent) == total:
+                    campaign.status = 'completed'
+                elif len(failed) == total:
+                    campaign.status = 'failed'
+                elif len(sent) + len(failed) > 0:
+                    campaign.status = 'in_progress'
+                else:
+                    campaign.status = 'draft'
+            else:
+                campaign.status = 'draft'
     
     sms_type_id = fields.Many2one(
         'sms.type',
         string='SMS Type',
         required=True,
-        help='Classification of SMS campaign'
+        help='Classification of SMS campaign',
+        default=lambda self: self.env['sms.type'].search([], limit=1)
     )
     
     message = fields.Text('Message Content', required=True)
@@ -47,14 +80,12 @@ class SMSCampaign(models.Model):
         ('all_staff', 'All Staff'),
         ('department', 'Department'),
         ('all_departments', 'All Departments'),
-        ('club', 'Club'),
         ('mailing_list', 'Mailing List'),
         ('adhoc', 'Ad Hoc (CSV Upload)'),
         ('manual', 'Manual Numbers'),
-    ], string='Target Audience', required=True)
+    ], string='Target Audience', required=True, default='manual')
     
     department_id = fields.Many2one('hr.department', 'Department')
-    club_id = fields.Many2one('sms.club', 'Club')
     mailing_list_id = fields.Many2one('sms.mailing.list', 'Mailing List')
     
     import_file = fields.Binary(string='CSV File')
@@ -77,7 +108,10 @@ class SMSCampaign(models.Model):
     gateway_id = fields.Many2one(
         'sms.gateway.configuration', 
         'SMS Gateway',
-        help='Gateway to use for sending (leave empty for default)'
+        default=lambda self: self.env['sms.gateway.configuration'].search([
+            ('is_default', '=', True),
+            ('active', '=', True)
+        ], limit=1)
     )
     
     administrator_id = fields.Many2one(
@@ -114,9 +148,7 @@ class SMSCampaign(models.Model):
     def _compute_recipient_count(self):
         for campaign in self:
             campaign.total_recipients = len(campaign.recipient_ids)
-            campaign.pending_count = len(
-                campaign.recipient_ids.filtered(lambda r: r.status == 'pending')
-            )
+            campaign.pending_count = len(campaign.recipient_ids.filtered(lambda r: r.status == 'pending'))
     
     @api.depends('sent_count', 'total_recipients')
     def _compute_success_rate(self):
@@ -131,32 +163,27 @@ class SMSCampaign(models.Model):
         for campaign in self:
             campaign.total_cost = sum(campaign.recipient_ids.mapped('cost'))
     
-    def _get_gateway(self):
-        """Get SMS gateway for this campaign with fallback logic"""
-        self.ensure_one()
-        
-        if self.gateway_id and self.gateway_id.active:
-            return self.gateway_id
-        
-        try:
-            gateway = self.env['sms.gateway.configuration'].get_default_gateway()
-            return gateway
-        except UserError as e:
-            raise
+    @api.onchange('sms_type_id')
+    def _onchange_sms_type_id(self):
+        """Auto-set target_type based on SMS type"""
+        if self.sms_type_id:
+            type_mapping = {
+                'adhoc': 'adhoc',
+                'manual': 'manual',
+                'staff': 'all_staff',
+                'student': 'all_students',
+            }
+            
+            sms_type_code = self.sms_type_id.code
+            
+            if sms_type_code in type_mapping:
+                self.target_type = type_mapping[sms_type_code]
     
     def action_prepare_recipients(self):
-        """Prepare recipients based on target type"""
         self.ensure_one()
         
         if not self._check_user_permission():
-            raise UserError(
-                _('You do not have permission to send to this audience.\n\n'
-                  'Your role: %s\n'
-                  'Target: %s') % (
-                    self.env.user.sms_role or 'None',
-                    dict(self._fields['target_type'].selection).get(self.target_type)
-                )
-            )
+            raise exceptions.UserError(_('You do not have permission to send to this audience.'))
         
         self.recipient_ids.unlink()
         
@@ -164,18 +191,22 @@ class SMSCampaign(models.Model):
         
         if self.target_type == 'all_students':
             recipients_data = self._get_all_students()
+        
         elif self.target_type == 'all_staff':
             recipients_data = self._get_all_staff()
+        
         elif self.target_type == 'department':
             recipients_data = self._get_department_contacts()
+        
         elif self.target_type == 'all_departments':
             recipients_data = self._get_all_departments_contacts()
-        elif self.target_type == 'club':
-            recipients_data = self._get_club_members()
+        
         elif self.target_type == 'mailing_list':
             recipients_data = self._get_mailing_list_contacts()
+        
         elif self.target_type == 'adhoc':
             recipients_data = self._process_adhoc_csv()
+        
         elif self.target_type == 'manual':
             recipients_data = self._process_manual_numbers()
         
@@ -276,7 +307,7 @@ class SMSCampaign(models.Model):
     def _get_department_contacts(self):
         """Get contacts from specific department"""
         if not self.department_id:
-            raise UserError(_("Please select a department"))
+            raise exceptions.UserError(_("Please select a department"))
         
         recipients = []
         contacts = self.env['sms.contact'].search([
@@ -318,28 +349,10 @@ class SMSCampaign(models.Model):
         
         return recipients
     
-    def _get_club_members(self):
-        """Get club members"""
-        if not self.club_id:
-            raise UserError(_("Please select a club"))
-        
-        recipients = []
-        for contact in self.club_id.member_ids:
-            if contact.opt_in and self._check_not_blacklisted(contact.mobile):
-                recipients.append({
-                    'campaign_id': self.id,
-                    'name': contact.name,
-                    'phone_number': contact.mobile,
-                    'club': self.club_id.name,
-                    'recipient_type': 'student',
-                })
-        
-        return recipients
-    
     def _get_mailing_list_contacts(self):
         """Get mailing list contacts"""
         if not self.mailing_list_id:
-            raise UserError(_("Please select a mailing list"))
+            raise exceptions.UserError(_("Please select a mailing list"))
         
         recipients = []
         for contact in self.mailing_list_id.contact_ids:
@@ -356,7 +369,7 @@ class SMSCampaign(models.Model):
     def _process_adhoc_csv(self):
         """Process CSV file with name,number format"""
         if not self.import_file:
-            raise UserError(_("Please upload a CSV file"))
+            raise exceptions.UserError(_("Please upload a CSV file"))
         
         recipients = []
         errors = []
@@ -372,6 +385,7 @@ class SMSCampaign(models.Model):
                 
                 name = row.get('name', '').strip()
                 number = row.get('number', '').strip()
+                
                 if not number:
                     errors.append(_('Row %d: Missing phone number') % row_num)
                     continue
@@ -393,17 +407,17 @@ class SMSCampaign(models.Model):
                 error_msg = '\n'.join(errors[:10])
                 if len(errors) > 10:
                     error_msg += _('\n... and %d more errors') % (len(errors) - 10)
-                raise UserError(error_msg)
+                raise exceptions.UserError(error_msg)
         
         except Exception as e:
-            raise UserError(_('Error processing CSV file: %s') % str(e))
+            raise exceptions.UserError(_('Error processing CSV file: %s') % str(e))
         
         return recipients
     
     def _process_manual_numbers(self):
         """Process comma-separated manual numbers"""
         if not self.manual_numbers:
-            raise UserError(_("Please enter phone numbers"))
+            raise exceptions.UserError(_("Please enter phone numbers"))
         
         recipients = []
         numbers = [n.strip() for n in self.manual_numbers.split(',')]
@@ -428,45 +442,18 @@ class SMSCampaign(models.Model):
         self.ensure_one()
         
         if not self.recipient_ids:
-            raise UserError(_("No recipients! Please prepare recipients first."))
+            raise exceptions.UserError(_("No recipients! Please prepare recipients first."))
         
-        try:
-            gateway = self._get_gateway()
-            
-            if not gateway.username or not gateway.api_key:
-                raise UserError(
-                    _('Gateway "%s" is not fully configured!\n\n'
-                      'Missing: %s\n\n'
-                      'Please update gateway configuration.') % (
-                        gateway.name,
-                        ', '.join(filter(None, [
-                            'Username' if not gateway.username else '',
-                            'API Key' if not gateway.api_key else ''
-                        ]))
-                    )
-                )
-                
-        except UserError as e:
-            raise UserError(
-                _('Cannot send SMS: %s\n\n'
-                  'Please configure gateway:\n'
-                  'SMS System → Configuration → Gateway Configuration') % str(e)
-            )
+        if not self.gateway_id:
+            raise exceptions.UserError(_("No SMS gateway configured!"))
         
-        self.status = 'in_progress'
+        self.write({'state_manual': 'in_progress'})
         
         pending_recipients = self.recipient_ids.filtered(lambda r: r.status == 'pending')
         
-        if not pending_recipients:
-            raise UserError(_("No pending recipients to send to!"))
-        
         batch_size = 100
-        total_batches = (len(pending_recipients) + batch_size - 1) // batch_size
-        
-        for batch_num in range(total_batches):
-            start_idx = batch_num * batch_size
-            end_idx = min(start_idx + batch_size, len(pending_recipients))
-            batch = pending_recipients[start_idx:end_idx]
+        for i in range(0, len(pending_recipients), batch_size):
+            batch = pending_recipients[i:i+batch_size]
             
             for recipient in batch:
                 message = self.message
@@ -480,24 +467,12 @@ class SMSCampaign(models.Model):
                     recipient.personalized_message = message
                 
                 try:
-                    success, result = gateway.send_sms(recipient.phone_number, message)
+                    success, result = self.gateway_id.send_sms(recipient.phone_number, message)
                     
                     if success:
-                        actual_cost = 1.0
-                        if isinstance(result, dict):
-                            sms_data = result.get('SMSMessageData', {})
-                            recipients_list = sms_data.get('Recipients', [])
-                            if recipients_list:
-                                cost_str = recipients_list[0].get('cost', 'KES 1.0')
-                                try:
-                                    actual_cost = float(cost_str.replace('KES', '').strip())
-                                except:
-                                    actual_cost = 1.0
-                        
                         recipient.write({
                             'status': 'sent',
-                            'sent_date': fields.Datetime.now(),
-                            'cost': actual_cost,
+                            'sent_date': fields.Datetime.now()
                         })
                         self.sent_count += 1
                     else:
@@ -508,33 +483,19 @@ class SMSCampaign(models.Model):
                         self.failed_count += 1
                         
                 except Exception as e:
+                    _logger.error(f"Error sending SMS to {recipient.phone_number}: {str(e)}")
                     recipient.write({
                         'status': 'failed',
                         'error_message': str(e)
                     })
                     self.failed_count += 1
         
-        if self.sent_count == len(self.recipient_ids):
-            self.status = 'completed'
-        elif self.sent_count > 0:
-            self.status = 'completed'
-        else:
-            self.status = 'failed'
-        
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Campaign Completed'),
-                'message': _('Campaign completed!\n\n'
-                           'Sent: %d\n'
-                           'Failed: %d\n'
-                           'Success Rate: %.1f%%') % (
-                    self.sent_count, 
-                    self.failed_count,
-                    self.success_rate
-                ),
-                'type': 'success' if self.status == 'completed' else 'warning',
+                'message': _('Campaign completed! %d sent, %d failed') % (self.sent_count, self.failed_count),
+                'type': 'success',
                 'sticky': True,
             }
         }
@@ -544,20 +505,12 @@ class SMSCampaign(models.Model):
         self.ensure_one()
         
         if not self.schedule_date:
-            raise UserError(_("Please set a schedule date first!"))
+            raise exceptions.UserError(_("Please set a schedule date first!"))
         
         if not self.recipient_ids:
-            raise UserError(_("No recipients! Please prepare recipients first."))
+            raise exceptions.UserError(_("No recipients! Please prepare recipients first."))
         
-        try:
-            self._get_gateway()
-        except UserError as e:
-            raise UserError(
-                _('Cannot schedule: %s\n\n'
-                  'Please configure gateway before scheduling.') % str(e)
-            )
-        
-        self.status = 'scheduled'
+        self.write({'state_manual': 'scheduled'})
         
         return {
             'type': 'ir.actions.client',
@@ -571,7 +524,8 @@ class SMSCampaign(models.Model):
     def action_cancel(self):
         """Cancel campaign"""
         self.ensure_one()
-        self.status = 'cancelled'
+        
+        self.write({'state_manual': 'cancelled'})
         
         return {
             'type': 'ir.actions.client',
@@ -581,23 +535,3 @@ class SMSCampaign(models.Model):
                 'type': 'info',
             }
         }
-    
-    @api.model
-    def cron_send_scheduled(self):
-        """Cron job to send scheduled campaigns"""
-        now = fields.Datetime.now()
-        
-        scheduled_campaigns = self.search([
-            ('status', '=', 'scheduled'),
-            ('schedule_date', '<=', now)
-        ])
-        
-        for campaign in scheduled_campaigns:
-            try:
-                campaign.action_send()
-            except Exception as e:
-                _logger.error('Failed to send scheduled campaign %s: %s', 
-                            campaign.name, str(e))
-                campaign.write({
-                    'status': 'failed',
-                })

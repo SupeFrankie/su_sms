@@ -12,8 +12,6 @@ access_sms_detail_manager,sms.detail.manager,model_sms_detail,group_sms_system_a
 access_sms_detail_user,sms.detail.user,model_sms_detail,group_sms_basic_user,1,0,0,0
 access_sms_template_manager,sms.template.manager,model_sms_template,group_sms_system_admin,1,1,1,1
 access_sms_template_user,sms.template.user,model_sms_template,group_sms_basic_user,1,1,1,0
-access_sms_club_manager,sms.club.manager,model_sms_club,group_sms_system_admin,1,1,1,1
-access_sms_club_user,sms.club.user,model_sms_club,group_sms_basic_user,1,1,1,0
 access_sms_tag_all,sms.tag.all,model_sms_tag,base.group_user,1,1,1,0
 access_sms_campaign_manager,sms.campaign.manager,model_sms_campaign,group_sms_system_admin,1,1,1,1
 access_sms_campaign_admin,sms.campaign.admin,model_sms_campaign,group_sms_administrator,1,1,1,0
@@ -46,4 +44,4 @@ access_sms_department_manager,sms.department.manager,model_sms_department,group_
 access_sms_administrator_all,sms.administrator.all,model_sms_administrator,base.group_user,1,0,0,0
 access_sms_administrator_manager,sms.administrator.manager,model_sms_administrator,group_sms_system_admin,1,1,1,1
 access_sms_compose_wizard,access_sms_compose_wizard,model_sms_compose_wizard,base.group_user,1,1,1,1
-access_sms_incoming_message,access_sms_incoming_message,model_sms_incoming_message,base.group_user,1,0,0,0
+access_sms_incoming_message,sms.incoming.message,model_sms_incoming_message,base.group_user,1,1,1,1

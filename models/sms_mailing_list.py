@@ -53,7 +53,6 @@ class SMSMailingList(models.Model):
     list_type = fields.Selection([
         ('students', 'Students'),
         ('staff', 'Staff'),
-        ('club', 'Club Members'),
         ('department', 'Department'),
         ('custom', 'Custom')
     ], string='List Type', default='custom',
@@ -137,18 +136,13 @@ class SMSMailingList(models.Model):
         readonly=True
     )
     
-    # Related department/club (optional)
+    # Related department
     department_id = fields.Many2one(
         'hr.department',
         string='Department',
         help='Link to department if this is a department list'
     )
     
-    club_id = fields.Many2one(
-        'sms.club',
-        string='Club',
-        help='Link to club if this is a club list'
-    )
     
     # Computed fields
     @api.depends('contact_ids', 'contact_ids.opt_in', 'contact_ids.blacklisted')
@@ -296,7 +290,7 @@ class SMSMailingList(models.Model):
                     
                     if row.get('contact_type'):
                         contact_type = row['contact_type'].strip().lower()
-                        if contact_type in ['student', 'staff', 'club', 'external']:
+                        if contact_type in ['student', 'staff', 'external']:
                             contact_data['contact_type'] = contact_type
                     
                     if row.get('department'):

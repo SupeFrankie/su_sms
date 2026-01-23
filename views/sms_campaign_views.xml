@@ -79,7 +79,7 @@
                             <group>
                                 <field name="sms_type_id" required="1" options="{'no_create': True}"/>
                                 <field name="target_type" required="1"/>
-                                <field name="administrator_id" required="1" options="{'no_create': True}" invisible="not context.get('show_administrator', True)"/>
+                                <field name="administrator_id" required="1" options="{'no_create': True}" invisible="context.get('hide_administrator')"/>
                                 <field name="gateway_id" required="1" options="{'no_create': True}"/>
                             </group>
                             <group>
@@ -94,10 +94,6 @@
                         <!-- Target-specific fields -->
                         <group invisible="target_type not in ['department']">
                             <field name="department_id" required="target_type == 'department'"/>
-                        </group>
-                        
-                        <group invisible="target_type not in ['club']">
-                            <field name="club_id" required="target_type == 'club'"/>
                         </group>
                         
                         <group invisible="target_type not in ['mailing_list']">
@@ -133,7 +129,7 @@
                                     </group>
                                 </group>
                                 <group invisible="not personalized">
-                                    <div class="alert alert-info" role="alert">
+                                    <div class="alert alert-info">
                                         <p><strong>Available placeholders:</strong></p>
                                         <ul>
                                             <li>{name} - Recipient name</li>

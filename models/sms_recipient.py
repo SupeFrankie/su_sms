@@ -65,7 +65,6 @@ class SmsRecipient(models.Model):
     )
 
     department = fields.Char(help='Department name')
-    club = fields.Char(help='Club name')
     year_of_study = fields.Char()
 
     @api.constrains('phone_number', 'campaign_id')

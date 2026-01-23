@@ -409,24 +409,40 @@ class SmsGatewayConfiguration(models.Model):
         return phone
     
     def test_connection(self):
-        """Test gateway connection by sending SMS to current user's phone"""
+        """Test gateway connection by sending SMS to test number"""
         self.ensure_one()
         
+        # Get test number from user profile or use configured number
         user = self.env.user
-        test_number = user.partner_id.mobile or user.partner_id.phone
+        test_number = None
         
+        # Try to get phone from user's partner
+        if user.partner_id:
+            for field_name in ['mobile', 'phone', 'mobile_phone']:
+                try:
+                    test_number = getattr(user.partner_id, field_name, None)
+                    if test_number:
+                        break
+                except AttributeError:
+                    continue
+        
+        # Fallback to asking user
         if not test_number:
-            raise ValidationError(
-                'Cannot test connection!\n\n'
-                'The current user has no mobile/phone number set.\n'
-                'Please add a phone number to your user profile:\n'
-                'Settings → Users → Your User → Mobile/Phone'
-            )
+            # Return a wizard to ask for phone number
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Test Gateway',
+                'res_model': 'sms.gateway.test.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {'default_gateway_id': self.id}
+            }
         
+        # Send test SMS
         test_message = (
             f"Gateway test successful!\n"
             f"Gateway: {self.name}\n"
-            f"Sent by: {user.name}"
+            f"Sent from Odoo SMS Module"
         )
         
         success, result = self.send_sms(test_number, test_message)
@@ -437,7 +453,7 @@ class SmsGatewayConfiguration(models.Model):
                 'tag': 'display_notification',
                 'params': {
                     'title': 'Test Successful',
-                    'message': f'Test SMS sent to {test_number}',
+                    'message': f'Test SMS sent to {test_number}\n\nCheck your phone!',
                     'type': 'success',
                     'sticky': False,
                 }
