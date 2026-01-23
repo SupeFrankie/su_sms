@@ -1,5 +1,4 @@
-# models/sms_campaign.py - COMPLETE WITH PHP LOGIC
-
+# models/sms_campaign.py 
 from odoo import models, fields, api, exceptions, _
 import logging
 import base64
@@ -80,12 +79,33 @@ class SMSCampaign(models.Model):
     )
     
     administrator_id = fields.Many2one(
-        'res.users',
+        'sms.administrator',
         string='Administrator',
-        default=lambda self: self.env.user,
+        default=lambda self: self._get_default_administrator(),
         required=True,
-        tracking=True
+        tracking=True,
+        help='SMS Administrator (links user to department for billing)'
     )
+    
+    # Convenience fields
+    user_id = fields.Many2one(
+        related='administrator_id.user_id',
+        string='User',
+        store=True,
+        readonly=True
+    )
+    
+    department_id = fields.Many2one(
+        related='administrator_id.department_id',
+        string='Department',
+        store=True,
+        readonly=True
+    )
+    
+    @api.model
+    def _get_default_administrator(self):
+        """Get or create administrator record for current user"""
+        return self.env['sms.administrator'].get_or_create_for_user()
     
     kfs5_processed = fields.Boolean(
         string='KFS5 Processed',
@@ -172,7 +192,6 @@ class SMSCampaign(models.Model):
         
         elif self.target_type == 'all_departments':
             recipients_data = self._get_all_departments_contacts()
-        
         
         elif self.target_type == 'mailing_list':
             recipients_data = self._get_mailing_list_contacts()
@@ -554,7 +573,19 @@ class SMSCampaign(models.Model):
             }
         }
     
-    def action_download_template(self):
+    @api.model
+    def create(self, vals):
+        """Override create to validate permissions before creating"""
+        # Check credit before creating campaign
+        CreditManager = self.env['sms.credit.manager']
+        can_send, reason = CreditManager.check_can_send()
+        
+        if not can_send:
+            raise exceptions.UserError(reason)
+        
+        return super().create(vals)
+
+    def action_download_adhoc_sms_template(self):
         """
         Download CSV template for Ad Hoc SMS
         PHP equivalent: DownloadsController::adhoc_sms_template()

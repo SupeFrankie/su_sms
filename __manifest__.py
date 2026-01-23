@@ -51,7 +51,7 @@
                 'hr',
                 ],
     'data': [
-        # Security FIRST
+       # Security FIRST
         'security/security_groups.xml',
         'security/ir.model.access.csv',
         
@@ -63,7 +63,7 @@
         'data/ir_cron.xml',
         
         # --- LOAD WIZARDS EARLY (Dependencies for Views) ---
-        'wizard/sms_composer_views.xml', 
+        'wizard/sms_composer_views.xml',
         
         # --- LOAD VIEW FILES (DEFINING ACTIONS) ---
         'views/sms_gateway_views.xml',
@@ -85,9 +85,10 @@
         # Extended views
         'views/hr_department_views.xml',
         'views/res_users_views.xml',
+        'views/sms_administrator_views.xml',
         'views/sms_department_expenditure_views.xml',
         
-        # Sidebar
+        # Sidebar template
         'views/sms_sidebar_template.xml',
         
         # --- LOAD MENUS LAST ---

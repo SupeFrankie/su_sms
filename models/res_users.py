@@ -1,9 +1,26 @@
-# models/res_users.py
+# models/res_users.py 
 
 from odoo import models, fields, api, _
 
 class ResUsers(models.Model):
     _inherit = 'res.users'
+    
+    # Use related field from employee if exists, otherwise direct field
+    department_id = fields.Many2one(
+        'hr.department',
+        string='Department',
+        compute='_compute_department_id',
+        store=True,
+        readonly=False,
+        help='Department this user belongs to (for SMS billing)'
+    )
+    
+    # Direct field for users without employee records
+    sms_department_id = fields.Many2one(
+        'hr.department',
+        string='SMS Department Override',
+        help='Use this if user has no employee record'
+    )
     
     sms_role = fields.Selection([
         ('basic', 'Basic User'),
@@ -13,13 +30,17 @@ class ResUsers(models.Model):
         ('system_admin', 'System Administrator'),
     ], string='SMS Role', compute='_compute_sms_role', store=True)
     
-    department_id = fields.Many2one(
-        'hr.department',
-        string='Department',
-        help='Department this user belongs to'
-    )
+    @api.depends('employee_ids.department_id', 'sms_department_id')
+    def _compute_department_id(self):
+        """Get department from employee or override field"""
+        for user in self:
+            if user.employee_ids and user.employee_ids[0].department_id:
+                user.department_id = user.employee_ids[0].department_id
+            elif user.sms_department_id:
+                user.department_id = user.sms_department_id
+            else:
+                user.department_id = False
     
-    #@api.depends('groups_id.users')
     def _compute_sms_role(self):
         """Compute SMS role based on security groups"""
         for user in self:
@@ -42,11 +63,9 @@ class ResUsers(models.Model):
         
         if self.has_group('su_sms.group_sms_system_admin') or \
            self.has_group('su_sms.group_sms_administrator'):
-            # System Admin and Administrator can access all departments
             return self.env['hr.department'].search([])
         
         elif self.has_group('su_sms.group_sms_faculty_admin'):
-            # Faculty Admin can access their faculty and sub-departments
             if self.department_id and self.department_id.is_school:
                 return self.env['hr.department'].search([
                     '|',
@@ -56,11 +75,9 @@ class ResUsers(models.Model):
             return self.department_id
         
         elif self.has_group('su_sms.group_sms_department_admin'):
-            # Staff Admin can only access their department
             return self.department_id
         
         else:
-            # Basic users have no department restrictions for ad hoc/manual
             return self.env['hr.department']
     
     def can_send_to_all_students(self):
