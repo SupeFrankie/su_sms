@@ -72,8 +72,11 @@ class DepartmentExpenditure(models.Model):
     )
     
     def init(self):
-        tools.drop_view_if_exists(self._cr, self._table)
-        self._cr.execute("""
+        """Create database view for department expenditure reporting"""
+
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        
+        self.env.cr.execute("""
             CREATE OR REPLACE VIEW %s AS (
                 SELECT
                     ROW_NUMBER() OVER (ORDER BY d.id, sc.id) AS id,
@@ -95,9 +98,9 @@ class DepartmentExpenditure(models.Model):
                     ) AS credit_spent
                 FROM
                     hr_department d
-                    INNER JOIN res_users u ON d.id = u.department_id
-                    INNER JOIN sms_campaign sc ON u.id = sc.administrator_id
+                    INNER JOIN sms_campaign sc ON d.id = sc.department_id
                 WHERE
                     sc.status = 'completed'
+                    AND sc.department_id IS NOT NULL
             )
         """ % self._table)

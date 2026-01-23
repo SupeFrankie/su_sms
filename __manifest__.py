@@ -99,7 +99,7 @@
     ],
     
     'external_dependencies': {
-        'python': ['dotenv'],
+        'python': ['python-dotenv'],
     },
     
     'demo': [

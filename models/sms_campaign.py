@@ -1,9 +1,7 @@
 # models/sms_campaign.py 
+
 from odoo import models, fields, api, exceptions, _
 import logging
-import base64
-import csv
-import io
 
 _logger = logging.getLogger(__name__)
 
@@ -49,7 +47,14 @@ class SMSCampaign(models.Model):
         ('manual', 'Manual Numbers'),
     ], string='Target Audience', required=True)
     
-    department_id = fields.Many2one('hr.department', 'Department')
+    department_id = fields.Many2one(
+        'hr.department',
+        string='Department',
+        compute='_compute_department_id',
+        store=True,
+        readonly=True
+    )
+    
     mailing_list_id = fields.Many2one('sms.mailing.list', 'Mailing List')
     
     import_file = fields.Binary(string='CSV File')
@@ -79,34 +84,12 @@ class SMSCampaign(models.Model):
     )
     
     administrator_id = fields.Many2one(
-        'res.users', 
+        'res.users',
         string='Administrator',
         default=lambda self: self.env.user,
         required=True,
-        tracking=True,
-        # Removed dynamic domain using self; set domain in view or use a compute method if needed
+        tracking=True
     )
-    
-    # Convenience fields
-    user_id = fields.Many2one(
-        related='administrator_id.user_id',
-        string='User',
-        store=True,
-        readonly=True
-    )
-    
-    department_id = fields.Many2one(
-        'hr.department',
-        string='Department', 
-        related='administrator_id.department_id', 
-        store=True, 
-        readonly=True
-    )
-    
-    @api.model
-    def _get_default_administrator(self):
-        """Get or create administrator record for current user"""
-        return self.env['sms.administrator'].get_or_create_for_user()
     
     kfs5_processed = fields.Boolean(
         string='KFS5 Processed',
@@ -125,9 +108,11 @@ class SMSCampaign(models.Model):
         store=True
     )
     
-    # PHP System: Always check credit before allowing actions
-    can_send = fields.Boolean(compute='_compute_can_send')
-    credit_block_reason = fields.Char(compute='_compute_can_send')
+    # ADDED: Compute department from administrator's department
+    @api.depends('administrator_id', 'administrator_id.department_id')
+    def _compute_department_id(self):
+        for campaign in self:
+            campaign.department_id = campaign.administrator_id.department_id if campaign.administrator_id else False
     
     @api.depends('message')
     def _compute_message_length(self):
