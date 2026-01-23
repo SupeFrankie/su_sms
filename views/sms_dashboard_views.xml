@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Dashboard Template -->
+        <template id="sms_dashboard_template">
+            <t t-call="web.layout">
+                <div class="o_sms_dashboard">
+                    <div class="container-fluid">
+                        <!-- Header -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h1 class="page-header">SU SMS Dashboard</h1>
+                                <p class="text-muted">Overview of SMS activities for <t t-esc="user_name"/></p>
+                            </div>
+                        </div>
+
+                        <!-- Statistics Cards -->
+                        <div class="row mb-4">
+                            <!-- Total SMS Sent This Year -->
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card border-primary">
+                                    <div class="card-body text-center">
+                                        <i class="fa fa-envelope fa-3x text-primary mb-2"/>
+                                        <h3 class="mb-0"><t t-esc="total_sms_year"/></h3>
+                                        <p class="text-muted mb-0">SMS Sent This Year</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Cost -->
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card border-success">
+                                    <div class="card-body text-center">
+                                        <i class="fa fa-money fa-3x text-success mb-2"/>
+                                        <h3 class="mb-0">KES <t t-esc="total_cost_year"/></h3>
+                                        <p class="text-muted mb-0">Total Spend</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Success Rate -->
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card border-info">
+                                    <div class="card-body text-center">
+                                        <i class="fa fa-check-circle fa-3x text-info mb-2"/>
+                                        <h3 class="mb-0"><t t-esc="success_rate"/>%</h3>
+                                        <p class="text-muted mb-0">Success Rate</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Active Campaigns -->
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card border-warning">
+                                    <div class="card-body text-center">
+                                        <i class="fa fa-paper-plane fa-3x text-warning mb-2"/>
+                                        <h3 class="mb-0"><t t-esc="active_campaigns"/></h3>
+                                        <p class="text-muted mb-0">Active Campaigns</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charts Row -->
+                        <div class="row mb-4">
+                            <!-- SMS by Gender -->
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">SMS Sent by Gender</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="genderChart" height="250"/>
+                                        <div class="mt-3">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Gender</th>
+                                                        <th class="text-right">Count</th>
+                                                        <th class="text-right">Percentage</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr t-foreach="gender_stats" t-as="stat">
+                                                        <td><t t-esc="stat['gender']"/></td>
+                                                        <td class="text-right"><t t-esc="stat['count']"/></td>
+                                                        <td class="text-right"><t t-esc="stat['percentage']"/>%</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SMS by Department -->
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0">SMS Sent by Department</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="departmentChart" height="250"/>
+                                        <div class="mt-3" style="max-height: 300px; overflow-y: auto;">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Department</th>
+                                                        <th class="text-right">Count</th>
+                                                        <th class="text-right">Cost (KES)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr t-foreach="department_stats" t-as="stat">
+                                                        <td><t t-esc="stat['department']"/></td>
+                                                        <td class="text-right"><t t-esc="stat['count']"/></td>
+                                                        <td class="text-right"><t t-esc="stat['cost']"/></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Monthly Trend -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="mb-0">Monthly SMS Trend</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="monthlyTrendChart" height="100"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Campaigns -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-dark text-white">
+                                        <h5 class="mb-0">Recent Campaigns</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Campaign Name</th>
+                                                    <th>Type</th>
+                                                    <th>Date</th>
+                                                    <th class="text-right">Recipients</th>
+                                                    <th class="text-right">Sent</th>
+                                                    <th class="text-right">Cost</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr t-foreach="recent_campaigns" t-as="campaign">
+                                                    <td><t t-esc="campaign['name']"/></td>
+                                                    <td><span class="badge badge-secondary"><t t-esc="campaign['type']"/></span></td>
+                                                    <td><t t-esc="campaign['date']"/></td>
+                                                    <td class="text-right"><t t-esc="campaign['recipients']"/></td>
+                                                    <td class="text-right"><t t-esc="campaign['sent']"/></td>
+                                                    <td class="text-right">KES <t t-esc="campaign['cost']"/></td>
+                                                    <td>
+                                                        <span t-att-class="'badge badge-' + campaign['status_class']">
+                                                            <t t-esc="campaign['status']"/>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart.js Integration -->
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"/>
+                <script type="text/javascript">
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Gender Chart
+                        var genderCtx = document.getElementById('genderChart').getContext('2d');
+                        new Chart(genderCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: <t t-esc="gender_labels"/>,
+                                datasets: [{
+                                    data: <t t-esc="gender_data"/>,
+                                    backgroundColor: ['#007bff', '#dc3545', '#6c757d']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { position: 'bottom' }
+                                }
+                            }
+                        });
+
+                        // Department Chart
+                        var deptCtx = document.getElementById('departmentChart').getContext('2d');
+                        new Chart(deptCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: <t t-esc="department_labels"/>,
+                                datasets: [{
+                                    label: 'SMS Count',
+                                    data: <t t-esc="department_data"/>,
+                                    backgroundColor: '#28a745'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false }
+                                },
+                                scales: {
+                                    y: { beginAtZero: true }
+                                }
+                            }
+                        });
+
+                        // Monthly Trend Chart
+                        var monthlyCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+                        new Chart(monthlyCtx, {
+                            type: 'line',
+                            data: {
+                                labels: <t t-esc="monthly_labels"/>,
+                                datasets: [{
+                                    label: 'SMS Sent',
+                                    data: <t t-esc="monthly_data"/>,
+                                    borderColor: '#17a2b8',
+                                    backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                                    tension: 0.4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false }
+                                },
+                                scales: {
+                                    y: { beginAtZero: true }
+                                }
+                            }
+                        });
+                    });
+                </script>
+
+                <style>
+                    .o_sms_dashboard .card {
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        transition: transform 0.2s;
+                    }
+                    .o_sms_dashboard .card:hover {
+                        transform: translateY(-5px);
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+                    }
+                    .page-header {
+                        font-weight: 300;
+                        color: #003DA5;
+                    }
+                </style>
+            </t>
+        </template>
+
+        <!-- Dashboard Action -->
+        <record id="action_sms_dashboard" model="ir.actions.client">
+            <field name="name">SMS Dashboard</field>
+            <field name="tag">sms_dashboard</field>
+        </record>
+    </data>
+</odoo>

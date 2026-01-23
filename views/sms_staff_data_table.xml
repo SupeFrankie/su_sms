@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Staff Contact List View (Data Table) -->
+        <record id="view_sms_contact_staff_list" model="ir.ui.view">
+            <field name="name">sms.contact.staff.list</field>
+            <field name="model">sms.contact</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <list string="Staff Contacts" 
+                      create="true" 
+                      edit="true" 
+                      delete="true"
+                      export_xlsx="true"
+                      decoration-muted="not active" 
+                      decoration-danger="blacklisted"
+                      decoration-info="not opt_in">
+                    
+                    <field name="student_id" string="Staff ID" optional="show"/>
+                    <field name="name" string="Full Name"/>
+                    <field name="mobile" string="Mobile Number"/>
+                    <field name="email" optional="show"/>
+                    <field name="gender" optional="show"/>
+                    <field name="department_id" string="Department"/>
+                    <field name="opt_in" widget="boolean_toggle" string="Subscribed"/>
+                    <field name="blacklisted" invisible="1"/>
+                    <field name="active" invisible="1"/>
+                    <field name="messages_sent" string="SMS Sent" sum="Total SMS" optional="show"/>
+                    <field name="last_message_date" string="Last SMS" optional="hide"/>
+                    <field name="contact_type" invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Staff Contact Form View -->
+        <record id="view_sms_contact_staff_form" model="ir.ui.view">
+            <field name="name">sms.contact.staff.form</field>
+            <field name="model">sms.contact</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <form string="Staff Contact">
+                    <header>
+                        <button name="action_opt_in" string="Subscribe" type="object" 
+                                class="btn-success" invisible="opt_in"/>
+                        <button name="action_opt_out" string="Unsubscribe" type="object" 
+                                class="btn-warning" invisible="not opt_in"/>
+                        <button name="action_add_to_blacklist" string="Blacklist" type="object" 
+                                class="btn-danger" invisible="blacklisted"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="toggle_active" type="object" 
+                                    class="oe_stat_button" icon="fa-archive">
+                                <field name="active" widget="boolean_button" 
+                                       options='{"terminology": "archive"}'/>
+                            </button>
+                            <button class="oe_stat_button" icon="fa-envelope" type="object">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_value"><field name="messages_sent"/></span>
+                                    <span class="o_stat_text">SMS Sent</span>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <widget name="web_ribbon" title="Blacklisted" bg_color="bg-danger" 
+                                invisible="not blacklisted"/>
+                        <widget name="web_ribbon" title="Unsubscribed" bg_color="bg-warning" 
+                                invisible="opt_in or blacklisted"/>
+                        
+                        <div class="oe_title">
+                            <h1><field name="name" placeholder="Staff Member Name" required="1"/></h1>
+                        </div>
+                        
+                        <group>
+                            <group string="Contact Information">
+                                <field name="student_id" string="Staff ID" placeholder="e.g., EMP001"/>
+                                <field name="mobile" placeholder="+254712345678" required="1"/>
+                                <field name="email" placeholder="staff@strathmore.edu"/>
+                                <field name="gender"/>
+                            </group>
+                            <group string="Organization">
+                                <field name="department_id"/>
+                                <field name="contact_type" invisible="1"/>
+                                <field name="partner_id" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <group string="SMS Preferences">
+                            <group>
+                                <field name="opt_in" widget="boolean_toggle" string="Subscribed"/>
+                                <field name="opt_in_date" readonly="1" invisible="not opt_in"/>
+                                <field name="opt_out_date" readonly="1" invisible="opt_in"/>
+                            </group>
+                            <group>
+                                <field name="blacklisted" readonly="1"/>
+                                <field name="last_message_date" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Mailing Lists">
+                                <field name="mailing_list_ids">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="list_type"/>
+                                        <field name="contact_count"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Notes">
+                                <field name="notes" placeholder="Internal notes about this staff member..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Staff Contact Search View -->
+        <record id="view_sms_contact_staff_search" model="ir.ui.view">
+            <field name="name">sms.contact.staff.search</field>
+            <field name="model">sms.contact</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <search string="Search Staff">
+                    <field name="name" string="Name" filter_domain="['|', ('name', 'ilike', self), ('student_id', 'ilike', self)]"/>
+                    <field name="mobile" string="Mobile"/>
+                    <field name="student_id" string="Staff ID"/>
+                    <field name="department_id" string="Department"/>
+                    <field name="email" string="Email"/>
+                    <separator/>
+                    <filter string="Subscribed" name="opted_in" domain="[('opt_in', '=', True)]"/>
+                    <filter string="Unsubscribed" name="opted_out" domain="[('opt_in', '=', False)]"/>
+                    <filter string="Blacklisted" name="blacklisted" domain="[('blacklisted', '=', True)]"/>
+                    <separator/>
+                    <filter string="Male" name="male" domain="[('gender', '=', 'male')]"/>
+                    <filter string="Female" name="female" domain="[('gender', '=', 'female')]"/>
+                    <separator/>
+                    <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                    <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                    <separator/>
+                    <group expand="0" string="Group By">
+                        <filter string="Department" name="group_department" context="{'group_by': 'department_id'}"/>
+                        <filter string="Gender" name="group_gender" context="{'group_by': 'gender'}"/>
+                        <filter string="Subscription Status" name="group_opt_in" context="{'group_by': 'opt_in'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Staff Contact Kanban View (Optional) -->
+        <record id="view_sms_contact_staff_kanban" model="ir.ui.view">
+            <field name="name">sms.contact.staff.kanban</field>
+            <field name="model">sms.contact</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile">
+                    <field name="name"/>
+                    <field name="mobile"/>
+                    <field name="student_id"/>
+                    <field name="department_id"/>
+                    <field name="gender"/>
+                    <field name="opt_in"/>
+                    <field name="blacklisted"/>
+                    <field name="messages_sent"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_global_click">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title"><field name="name"/></strong>
+                                        <div class="o_kanban_record_subtitle">
+                                            <field name="student_id"/> - <field name="department_id"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <field name="mobile" widget="phone"/>
+                                    <br/>
+                                    <span class="badge badge-pill" t-att-class="record.gender.raw_value == 'male' ? 'badge-primary' : 'badge-danger'">
+                                        <field name="gender"/>
+                                    </span>
+                                    <span class="badge badge-pill" t-att-class="record.opt_in.raw_value ? 'badge-success' : 'badge-warning'">
+                                        <t t-if="record.opt_in.raw_value">Subscribed</t>
+                                        <t t-else="">Unsubscribed</t>
+                                    </span>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <field name="messages_sent"/> SMS sent
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Staff Contact Action -->
+        <record id="action_sms_contact_staff" model="ir.actions.act_window">
+            <field name="name">Staff Directory</field>
+            <field name="res_model">sms.contact</field>
+            <field name="view_mode">list,kanban,form</field>
+            <field name="view_id" ref="view_sms_contact_staff_list"/>
+            <field name="search_view_id" ref="view_sms_contact_staff_search"/>
+            <field name="domain">[('contact_type', '=', 'staff')]</field>
+            <field name="context">{
+                'default_contact_type': 'staff',
+                'search_default_active': 1,
+                'search_default_opted_in': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No staff members found
+                </p>
+                <p>
+                    Click <b>Create</b> to add staff members manually, or use <b>Import</b> to upload a CSV file.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>
