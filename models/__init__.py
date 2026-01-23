@@ -1,63 +1,72 @@
 """
-Models Package
-==============
+Models Package - COMPLETE Import Order
+=======================================
 
-Contains all database models for SU SMS module.
+CRITICAL: Import order prevents circular dependencies.
+Rule: Import models in dependency hierarchy (base → complex).
 
-Order of import matters because of dependencies:
-1. Base models first (contacts, blacklist)
-2. Then models that reference them (mailing list)
-3. Finally messages and templates
-
-Models Package - Import Order Matters!
+Current models in this package:
+- Core: sms_type, sms_blacklist, sms_gateway_config, sms_credit, mock_webservice
+- Queue: sms_queue
+- Extensions: hr_department, res_partner, res_users
+- Contacts: sms_contact, sms_template, sms_mailing_list
+- Campaigns: sms_campaign, sms_recipient
+- Admin: sms_department, sms_administrator
+- Messages: sms_message, sms_detail
+- Wizards: sms_staff_filter, sms_student_filter
+- Reports: sms_department_expenditure, sms_incoming
 """
 
-# Base models first (no dependencies)
+# =============================================================================
+# LAYER 1: INDEPENDENT BASE MODELS (no dependencies on other SMS models)
+# =============================================================================
 from . import sms_type
 from . import sms_blacklist
 from . import sms_gateway_config
-from. import sms_credit
-
-
-# Balance reporting
 from . import sms_credit
+from . import mock_webservice
 from . import sms_queue
 
-
-
-# Models with basic dependencies
+# =============================================================================
+# LAYER 2: ODOO CORE EXTENSIONS (depend on hr/base modules only)
+# =============================================================================
 from . import hr_department
 from . import res_partner
 from . import res_users
 
-# Contact and related models
+# =============================================================================
+# LAYER 3: SMS CONTACT MODELS (depend on Layer 1 & 2)
+# =============================================================================
 from . import sms_contact
-
-# Templates
 from . import sms_template
-
-# Mailing lists (depends on contacts)
 from . import sms_mailing_list
 
-# Campaigns and recipients
-from . import sms_campaign
-from . import sms_recipient
-from . import sms_queue
-
-# Department and administrator models
+# =============================================================================
+# LAYER 4: DEPARTMENT & ADMIN (mutual dependency - import together)
+# =============================================================================
 from . import sms_department
 from . import sms_administrator
 
-# Message models
+# =============================================================================
+# LAYER 5: CAMPAIGN MODELS (depend on contacts, departments, admin)
+# =============================================================================
+from . import sms_campaign
+from . import sms_recipient
+
+# =============================================================================
+# LAYER 6: MESSAGE MODELS (depend on campaigns)
+# =============================================================================
 from . import sms_message
 from . import sms_detail
 
-# Filter wizards
+# =============================================================================
+# LAYER 7: FILTER WIZARDS (transient models - depend on everything above)
+# =============================================================================
 from . import sms_staff_filter
 from . import sms_student_filter
 
-# Expenditure reporting
+# =============================================================================
+# LAYER 8: REPORTING & VIEWS (SQL views and reports - absolute last)
+# =============================================================================
 from . import sms_department_expenditure
-
-# Incoming SMS reporting
 from . import sms_incoming
