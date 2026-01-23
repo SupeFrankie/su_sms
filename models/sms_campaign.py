@@ -1,4 +1,4 @@
-# models/sms_campaign.py 
+# models/sms_campaign.py - COMPLETE WITH PHP LOGIC
 
 from odoo import models, fields, api, exceptions, _
 import logging
@@ -23,48 +23,13 @@ class SMSCampaign(models.Model):
         ('completed', 'Completed'),
         ('failed', 'Failed'),
         ('cancelled', 'Cancelled'),
-    ], compute='_compute_status', store=True, tracking=True, 
-       string='Status', readonly=True, copy=False)
-
-    state_manual = fields.Selection([
-        ('draft', 'Draft'),
-        ('scheduled', 'Scheduled'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-        ('failed', 'Failed'),
-        ('cancelled', 'Cancelled'),
-    ], default='draft', string='Internal Status', copy=False)
-
-    @api.depends('recipient_ids.status', 'state_manual')
-    def _compute_status(self):
-        """Compute status from internal state or auto-compute from recipients"""
-        for campaign in self:
-            if campaign.state_manual in ['scheduled', 'in_progress', 'cancelled']:
-                campaign.status = campaign.state_manual
-                continue
-            
-            if campaign.recipient_ids:
-                sent = campaign.recipient_ids.filtered(lambda r: r.status == 'sent')
-                failed = campaign.recipient_ids.filtered(lambda r: r.status == 'failed')
-                total = len(campaign.recipient_ids)
-                
-                if len(sent) == total:
-                    campaign.status = 'completed'
-                elif len(failed) == total:
-                    campaign.status = 'failed'
-                elif len(sent) + len(failed) > 0:
-                    campaign.status = 'in_progress'
-                else:
-                    campaign.status = 'draft'
-            else:
-                campaign.status = 'draft'
+    ], default='draft', tracking=True, string='Status')
     
     sms_type_id = fields.Many2one(
         'sms.type',
         string='SMS Type',
         required=True,
-        help='Classification of SMS campaign',
-        default=lambda self: self.env['sms.type'].search([], limit=1)
+        help='Classification of SMS campaign'
     )
     
     message = fields.Text('Message Content', required=True)
@@ -83,7 +48,7 @@ class SMSCampaign(models.Model):
         ('mailing_list', 'Mailing List'),
         ('adhoc', 'Ad Hoc (CSV Upload)'),
         ('manual', 'Manual Numbers'),
-    ], string='Target Audience', required=True, default='manual')
+    ], string='Target Audience', required=True)
     
     department_id = fields.Many2one('hr.department', 'Department')
     mailing_list_id = fields.Many2one('sms.mailing.list', 'Mailing List')
@@ -139,6 +104,10 @@ class SMSCampaign(models.Model):
         store=True
     )
     
+    # PHP System: Always check credit before allowing actions
+    can_send = fields.Boolean(compute='_compute_can_send')
+    credit_block_reason = fields.Char(compute='_compute_can_send')
+    
     @api.depends('message')
     def _compute_message_length(self):
         for campaign in self:
@@ -163,28 +132,31 @@ class SMSCampaign(models.Model):
         for campaign in self:
             campaign.total_cost = sum(campaign.recipient_ids.mapped('cost'))
     
-    @api.onchange('sms_type_id')
-    def _onchange_sms_type_id(self):
-        """Auto-set target_type based on SMS type"""
-        if self.sms_type_id:
-            type_mapping = {
-                'adhoc': 'adhoc',
-                'manual': 'manual',
-                'staff': 'all_staff',
-                'student': 'all_students',
-            }
-            
-            sms_type_code = self.sms_type_id.code
-            
-            if sms_type_code in type_mapping:
-                self.target_type = type_mapping[sms_type_code]
+    def _compute_can_send(self):
+        """Check credit balance - PHP system checks on every page"""
+        CreditManager = self.env['sms.credit.manager']
+        
+        for campaign in self:
+            can_send, reason = CreditManager.check_can_send()
+            campaign.can_send = can_send
+            campaign.credit_block_reason = reason if not can_send else ''
     
     def action_prepare_recipients(self):
+        """
+        Prepare recipients based on target type
+        PHP equivalent: Multiple controllers with _get_* methods
+        """
         self.ensure_one()
         
+        # Check credit first
+        if not self.can_send:
+            raise exceptions.UserError(self.credit_block_reason)
+        
+        # Check user permissions
         if not self._check_user_permission():
             raise exceptions.UserError(_('You do not have permission to send to this audience.'))
         
+        # Clear existing recipients
         self.recipient_ids.unlink()
         
         recipients_data = []
@@ -210,6 +182,16 @@ class SMSCampaign(models.Model):
         elif self.target_type == 'manual':
             recipients_data = self._process_manual_numbers()
         
+        # CRITICAL: Add administrator's phone (PHP system does this)
+        admin_phone = self.administrator_id.partner_id.mobile or self.administrator_id.partner_id.phone
+        if admin_phone:
+            recipients_data.append({
+                'campaign_id': self.id,
+                'name': self.administrator_id.name,
+                'phone_number': admin_phone,
+                'recipient_type': 'other',
+            })
+        
         if recipients_data:
             self.env['sms.recipient'].create(recipients_data)
             
@@ -224,30 +206,39 @@ class SMSCampaign(models.Model):
         }
     
     def _check_user_permission(self):
-        """Check if user has permission based on role"""
+        """
+        Check if user has permission based on role
+        PHP equivalent: Checks in controller constructors
+        """
         user = self.env.user
         
+        # System Administrator - full access
         if user.has_group('su_sms.group_sms_system_admin'):
             return True
         
+        # Administrator - can send to students and staff
         if user.has_group('su_sms.group_sms_administrator'):
             if self.target_type in ['all_students', 'all_staff', 'all_departments']:
                 return True
         
+        # Faculty Administrator - can send to students only
         if user.has_group('su_sms.group_sms_faculty_admin'):
             if self.target_type in ['all_students']:
                 return True
         
+        # Staff Administrator - can send to staff in their department
         if user.has_group('su_sms.group_sms_department_admin'):
             if self.target_type == 'department' and self.department_id == user.department_id:
                 return True
             if self.target_type == 'all_staff':
                 return True
         
+        # Basic User - can send ad hoc and manual only
         if user.has_group('su_sms.group_sms_basic_user'):
             if self.target_type in ['adhoc', 'manual']:
                 return True
         
+        # Everyone can send ad hoc and manual
         if self.target_type in ['adhoc', 'manual']:
             return True
         
@@ -278,6 +269,7 @@ class SMSCampaign(models.Model):
         """Get all staff from SMS contacts"""
         recipients = []
         
+        # Staff Administrator can only see their department
         domain = [
             ('contact_type', '=', 'staff'),
             ('active', '=', True),
@@ -438,8 +430,15 @@ class SMSCampaign(models.Model):
         return not self.env['sms.blacklist'].is_blacklisted(phone)
     
     def action_send(self):
-        """Send SMS campaign"""
+        """
+        Send SMS campaign
+        PHP equivalent: SendSMS job dispatch
+        """
         self.ensure_one()
+        
+        # Check credit again
+        if not self.can_send:
+            raise exceptions.UserError(self.credit_block_reason)
         
         if not self.recipient_ids:
             raise exceptions.UserError(_("No recipients! Please prepare recipients first."))
@@ -447,17 +446,37 @@ class SMSCampaign(models.Model):
         if not self.gateway_id:
             raise exceptions.UserError(_("No SMS gateway configured!"))
         
-        self.write({'state_manual': 'in_progress'})
+        self.status = 'in_progress'
         
+        # Queue the sending (mimics PHP's queue system)
+        self.with_delay()._send_batch()
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'message': _('Campaign queued for sending!'),
+                'type': 'success',
+                'sticky': True,
+            }
+        }
+    
+    def _send_batch(self):
+        """
+        Send SMS in batches
+        PHP equivalent: SendSMS job handler
+        Sends 100 recipients at a time
+        """
         pending_recipients = self.recipient_ids.filtered(lambda r: r.status == 'pending')
         
-        batch_size = 100
+        batch_size = 100  # PHP system uses 100
         for i in range(0, len(pending_recipients), batch_size):
             batch = pending_recipients[i:i+batch_size]
             
             for recipient in batch:
                 message = self.message
                 
+                # Personalization
                 if self.personalized:
                     message = message.replace('{name}', recipient.name or '')
                     message = message.replace('{admission_number}', recipient.admission_number or '')
@@ -470,9 +489,15 @@ class SMSCampaign(models.Model):
                     success, result = self.gateway_id.send_sms(recipient.phone_number, message)
                     
                     if success:
+                        # Parse result for cost
+                        cost = 0.0
+                        if isinstance(result, dict):
+                            cost = result.get('cost', 0.0)
+                        
                         recipient.write({
                             'status': 'sent',
-                            'sent_date': fields.Datetime.now()
+                            'sent_date': fields.Datetime.now(),
+                            'cost': cost
                         })
                         self.sent_count += 1
                     else:
@@ -490,15 +515,7 @@ class SMSCampaign(models.Model):
                     })
                     self.failed_count += 1
         
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': _('Campaign completed! %d sent, %d failed') % (self.sent_count, self.failed_count),
-                'type': 'success',
-                'sticky': True,
-            }
-        }
+        self.status = 'completed'
     
     def action_schedule(self):
         """Schedule campaign for later"""
@@ -510,7 +527,7 @@ class SMSCampaign(models.Model):
         if not self.recipient_ids:
             raise exceptions.UserError(_("No recipients! Please prepare recipients first."))
         
-        self.write({'state_manual': 'scheduled'})
+        self.status = 'scheduled'
         
         return {
             'type': 'ir.actions.client',
@@ -524,8 +541,7 @@ class SMSCampaign(models.Model):
     def action_cancel(self):
         """Cancel campaign"""
         self.ensure_one()
-        
-        self.write({'state_manual': 'cancelled'})
+        self.status = 'cancelled'
         
         return {
             'type': 'ir.actions.client',
@@ -534,4 +550,35 @@ class SMSCampaign(models.Model):
                 'message': _('Campaign cancelled'),
                 'type': 'info',
             }
+        }
+    
+    def action_download_csv_template(self):
+        """
+        Download CSV template for ad hoc SMS
+        PHP equivalent: DownloadsController::adhoc_sms_template()
+        """
+        import base64
+        
+        # Create CSV template
+        csv_content = "name,number\n"
+        csv_content += "John Doe,+254712345678\n"
+        csv_content += "Jane Smith,+254723456789\n"
+        csv_content += "Bob Johnson,+254734567890\n"
+        
+        # Encode to base64
+        csv_base64 = base64.b64encode(csv_content.encode('utf-8'))
+        
+        # Create attachment
+        attachment = self.env['ir.attachment'].create({
+            'name': 'sms_adhoc_template.csv',
+            'type': 'binary',
+            'datas': csv_base64,
+            'mimetype': 'text/csv',
+            'public': True,
+        })
+        
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/web/content/{attachment.id}?download=true',
+            'target': 'new',
         }

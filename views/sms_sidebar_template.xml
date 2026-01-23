@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Custom Sidebar Template -->
+        <template id="sms_sidebar_template" name="SMS System Sidebar">
+            <div class="o_sms_sidebar" style="position: fixed; left: 0; top: 0; width: 250px; height: 100vh; background: linear-gradient(135deg, #003DA5 0%, #8B0000 100%); color: white; padding: 20px; z-index: 1000; overflow-y: auto; box-shadow: 4px 0 10px rgba(0,0,0,0.3);">
+                
+                <!-- Logo/Title -->
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #FFD700; padding-bottom: 15px;">
+                    <h3 style="color: #FFD700; margin: 0; font-size: 18px; font-weight: bold;">SU SMS SYSTEM</h3>
+                    <p style="margin: 5px 0 0 0; font-size: 11px; color: rgba(255,255,255,0.8);">Strathmore University</p>
+                </div>
+                
+                <!-- User Profile Section -->
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid rgba(255,215,0,0.3);">
+                    <div style="font-size: 12px; margin-bottom: 5px; color: #FFD700;">Logged in as:</div>
+                    <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;" t-esc="user.name"/>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.9);" t-esc="user.sms_role or 'No SMS Role'"/>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 3px;" t-if="user.department_id" t-esc="user.department_id.name"/>
+                </div>
+                
+                <!-- Credit Balance Section -->
+                <div id="sms_credit_balance_widget" style="background: rgba(255,215,0,0.2); padding: 15px; border-radius: 10px; margin-bottom: 25px; border: 2px solid #FFD700; text-align: center;">
+                    <div style="font-size: 12px; margin-bottom: 5px; color: #FFD700; font-weight: bold;">CREDIT BALANCE</div>
+                    <div id="credit_amount" style="font-size: 24px; font-weight: bold; color: white; margin-bottom: 5px;">
+                        Loading...
+                    </div>
+                    <div id="credit_status" style="font-size: 10px; color: rgba(255,255,255,0.8);">
+                        Fetching balance...
+                    </div>
+                    <button id="refresh_balance" style="margin-top: 10px; background: rgba(255,255,255,0.2); border: 1px solid #FFD700; color: white; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-size: 11px;">
+                        🔄 Refresh
+                    </button>
+                </div>
+                
+                <!-- Navigation Menu -->
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 12px; color: #FFD700; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">SMS Modules</div>
+                    
+                    <!-- Staff SMS -->
+                    <a href="/web#action=su_sms.action_sms_staff" 
+                       t-if="user.has_group('su_sms.group_sms_department_admin') or user.has_group('su_sms.group_sms_administrator') or user.has_group('su_sms.group_sms_system_admin')"
+                       style="display: block; padding: 10px 15px; margin-bottom: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; text-decoration: none; color: white; border-left: 3px solid #FFD700; transition: all 0.3s;">
+                        <i class="fa fa-users" style="margin-right: 10px;"/> Staff SMS
+                    </a>
+                    
+                    <!-- Students SMS -->
+                    <a href="/web#action=su_sms.action_sms_student"
+                       t-if="user.has_group('su_sms.group_sms_faculty_admin') or user.has_group('su_sms.group_sms_administrator') or user.has_group('su_sms.group_sms_system_admin')"
+                       style="display: block; padding: 10px 15px; margin-bottom: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; text-decoration: none; color: white; border-left: 3px solid #FFD700; transition: all 0.3s;">
+                        <i class="fa fa-graduation-cap" style="margin-right: 10px;"/> Students SMS
+                    </a>
+                    
+                    <!-- Ad Hoc SMS -->
+                    <a href="/web#action=su_sms.action_sms_adhoc"
+                       style="display: block; padding: 10px 15px; margin-bottom: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; text-decoration: none; color: white; border-left: 3px solid #FFD700; transition: all 0.3s;">
+                        <i class="fa fa-upload" style="margin-right: 10px;"/> Ad Hoc SMS
+                    </a>
+                    
+                    <!-- Manual SMS -->
+                    <a href="/web#action=su_sms.action_sms_manual"
+                       style="display: block; padding: 10px 15px; margin-bottom: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; text-decoration: none; color: white; border-left: 3px solid #FFD700; transition: all 0.3s;">
+                        <i class="fa fa-keyboard-o" style="margin-right: 10px;"/> Manual SMS
+                    </a>
+                </div>
+                
+                <!-- Management Section -->
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 12px; color: #FFD700; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">Management</div>
+                    
+                    <a href="/web#action=su_sms.action_sms_campaign_all"
+                       style="display: block; padding: 10px 15px; margin-bottom: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; text-decoration: none; color: white; border-left: 3px solid #FFD700; transition: all 0.3s;">
+                        <i class="fa fa-list" style="margin-right: 10px;"/> All Campaigns
+                    </a>
+                    
+                    <a href="/web#action=su_sms.action_sms_contact"
+                       style="display: block; padding: 10px 15px; margin-bottom: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; text-decoration: none; color: white; border-left: 3px solid #FFD700; transition: all 0.3s;">
+                        <i class="fa fa-address-book" style="margin-right: 10px;"/> Contacts
+                    </a>
+                </div>
+                
+                <!-- Configuration (System Admin Only) -->
+                <div t-if="user.has_group('su_sms.group_sms_system_admin')">
+                    <div style="font-size: 12px; color: #FFD700; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">Configuration</div>
+                    
+                    <a href="/web#action=su_sms.action_sms_gateway_configuration"
+                       style="display: block; padding: 10px 15px; margin-bottom: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; text-decoration: none; color: white; border-left: 3px solid #FFD700; transition: all 0.3s;">
+                        <i class="fa fa-cog" style="margin-right: 10px;"/> Gateway Config
+                    </a>
+                    
+                    <a href="/web#action=su_sms.action_sms_blacklist"
+                       style="display: block; padding: 10px 15px; margin-bottom: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; text-decoration: none; color: white; border-left: 3px solid #FFD700; transition: all 0.3s;">
+                        <i class="fa fa-ban" style="margin-right: 10px;"/> Blacklist
+                    </a>
+                </div>
+                
+                <!-- Logout -->
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,215,0,0.3);">
+                    <a href="/web/session/logout"
+                       style="display: block; padding: 10px 15px; background: rgba(139,0,0,0.6); border-radius: 8px; text-decoration: none; color: white; text-align: center; border: 1px solid rgba(255,215,0,0.3);">
+                        <i class="fa fa-sign-out" style="margin-right: 10px;"/> Logout
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Push main content to the right -->
+            <style>
+                .o_action_manager {
+                    margin-left: 250px !important;
+                }
+                
+                .o_sms_sidebar a:hover {
+                    background: rgba(255,255,255,0.2) !important;
+                    transform: translateX(5px);
+                }
+                
+                #refresh_balance:hover {
+                    background: rgba(255,255,255,0.3);
+                }
+            </style>
+            
+            <!-- JavaScript for Credit Balance -->
+            <script type="text/javascript">
+                odoo.define('su_sms.sidebar', function (require) {
+                    'use strict';
+                    
+                    var rpc = require('web.rpc');
+                    
+                    function updateCreditBalance() {
+                        rpc.query({
+                            model: 'sms.credit.manager',
+                            method: 'get_current_balance',
+                            args: [false]
+                        }).then(function(result) {
+                            var creditDiv = document.getElementById('credit_amount');
+                            var statusDiv = document.getElementById('credit_status');
+                            
+                            if (result.error) {
+                                creditDiv.innerHTML = 'Error';
+                                creditDiv.style.color = '#ff6b6b';
+                                statusDiv.innerHTML = result.error;
+                            } else {
+                                var balance = result.balance;
+                                creditDiv.innerHTML = 'KES ' + balance.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&amp;,');
+                                
+                                if (result.low_balance) {
+                                    creditDiv.style.color = '#ff6b6b';
+                                    statusDiv.innerHTML = '⚠️ Low Balance';
+                                    statusDiv.style.color = '#ff6b6b';
+                                } else if (result.threshold_block) {
+                                    creditDiv.style.color = '#ffd93d';
+                                    statusDiv.innerHTML = '⚠️ Below Threshold';
+                                    statusDiv.style.color = '#ffd93d';
+                                } else {
+                                    creditDiv.style.color = 'white';
+                                    statusDiv.innerHTML = '✓ Balance OK';
+                                    statusDiv.style.color = '#6bcf7f';
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Update on load
+                    document.addEventListener('DOMContentLoaded', function() {
+                        updateCreditBalance();
+                        
+                        // Update every 5 minutes
+                        setInterval(updateCreditBalance, 300000);
+                        
+                        // Refresh button
+                        document.getElementById('refresh_balance').addEventListener('click', function() {
+                            this.innerHTML = '🔄 Refreshing...';
+                            rpc.query({
+                                model: 'sms.credit.manager',
+                                method: 'get_current_balance',
+                                args: [true]
+                            }).then(function() {
+                                updateCreditBalance();
+                                document.getElementById('refresh_balance').innerHTML = '🔄 Refresh';
+                            });
+                        });
+                    });
+                });
+            </script>
+        </template>
+        
+        <!-- Inject sidebar into webclient -->
+        <template id="webclient" inherit_id="web.webclient_bootstrap">
+            <xpath expr="//body" position="inside">
+                <t t-call="su_sms.sms_sidebar_template"/>
+            </xpath>
+        </template>
+    </data>
+</odoo>

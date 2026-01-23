@@ -84,6 +84,9 @@
         'views/res_users_views.xml',
         'views/sms_department_expenditure_views.xml',
         
+        # Sidebar
+        'views/sms_sidebar_template.xml',
+        
         # --- LOAD MENUS LAST ---
         'views/menu_views.xml',
         

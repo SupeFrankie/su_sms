@@ -45,3 +45,7 @@ access_sms_administrator_all,sms.administrator.all,model_sms_administrator,base.
 access_sms_administrator_manager,sms.administrator.manager,model_sms_administrator,group_sms_system_admin,1,1,1,1
 access_sms_compose_wizard,access_sms_compose_wizard,model_sms_compose_wizard,base.group_user,1,1,1,1
 access_sms_incoming_message,sms.incoming.message,model_sms_incoming_message,base.group_user,1,1,1,1
+access_sms_compose_wizard,access_sms_compose_wizard,model_sms_compose_wizard,base.group_user,1,1,1,1
+access_sms_credit_manager_all,sms.credit.manager.all,model_sms_credit_manager,base.group_user,1,1,1,0
+access_sms_queue_manager,sms.queue.manager,model_sms_queue,group_sms_system_admin,1,1,1,1
+access_sms_queue_user,sms.queue.user,model_sms_queue,base.group_user,1,0,0,0

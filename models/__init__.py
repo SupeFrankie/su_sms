@@ -17,6 +17,12 @@ from . import sms_type
 from . import sms_blacklist
 from . import sms_gateway_config
 
+# Balance reporting
+from . import sms_credit
+from . import sms_queue
+
+
+
 # Models with basic dependencies
 from . import hr_department
 from . import res_partner
