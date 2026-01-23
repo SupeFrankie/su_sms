@@ -87,7 +87,6 @@
     'views/sms_dashboard_views.xml',
     
     # Extended views
-    'views/hr_department_views.xml',
     'views/res_users_views.xml',
     'views/sms_department_expenditure_views.xml',
     

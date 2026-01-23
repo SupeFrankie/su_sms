@@ -79,12 +79,12 @@ class SMSCampaign(models.Model):
     )
     
     administrator_id = fields.Many2one(
-        'sms.administrator',
+        'res.users', 
         string='Administrator',
-        default=lambda self: self._get_default_administrator(),
+        default=lambda self: self.env.user,
         required=True,
         tracking=True,
-        help='SMS Administrator (links user to department for billing)'
+        # Removed dynamic domain using self; set domain in view or use a compute method if needed
     )
     
     # Convenience fields
@@ -96,9 +96,10 @@ class SMSCampaign(models.Model):
     )
     
     department_id = fields.Many2one(
-        related='administrator_id.department_id',
-        string='Department',
-        store=True,
+        'hr.department',
+        string='Department', 
+        related='administrator_id.department_id', 
+        store=True, 
         readonly=True
     )
     
