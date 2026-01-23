@@ -92,6 +92,7 @@
         
         # Templates and other data 
         'data/sms_template_data.xml',
+        #'data/ir_cron.xml',
         'views/opt_out_templates.xml'
     ],
     

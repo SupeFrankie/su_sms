@@ -129,7 +129,7 @@
                                     </group>
                                 </group>
                                 <group invisible="not personalized">
-                                    <div class="alert alert-info">
+                                    <div class="alert alert-info" role="alert">
                                         <p><strong>Available placeholders:</strong></p>
                                         <ul>
                                             <li>{name} - Recipient name</li>
