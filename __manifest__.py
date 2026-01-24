@@ -98,6 +98,12 @@
     'views/opt_out_templates.xml',
     ],
     
+    'assets': {
+      'web.assets_backend': [
+          'su_sms/static/src/js/campaign_character_counter.js',
+      ],
+    },
+    
     'external_dependencies': {
         'python': ['python-dotenv'],
     },

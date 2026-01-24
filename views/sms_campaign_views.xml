@@ -252,12 +252,5 @@
                 </form>
             </field>
         </record>
-
-        <!-- Add JavaScript for character counter -->
-        <template id="sms_campaign_assets" name="SMS Campaign Assets" inherit_id="web.assets_backend">
-            <xpath expr="." position="inside">
-                <script type="text/javascript" src="/su_sms/static/src/js/campaign_character_counter.js"/>
-            </xpath>
-        </template>
     </data>
 </odoo>

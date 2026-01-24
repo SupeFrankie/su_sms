@@ -10,49 +10,33 @@ CRITICAL: Models must be imported in dependency order:
 
 """
 
-# ========== LEVEL 1: Base Configuration Models ==========
-# These have no dependencies on other custom models
+# 1. Base Configuration
 from . import sms_type
 from . import sms_blacklist
 from . import sms_gateway_config
 
-# ========== LEVEL 2: Odoo Core Model Extensions ==========
-# These extend existing Odoo models (hr.department, res.users, res.partner)
+# 2. Odoo Core Extensions
 from . import hr_department
 from . import res_users
 from . import res_partner
 
-# ========== LEVEL 3: Core SMS Models ==========
-# Independent SMS-specific models
+# 3. Core SMS Models
 from . import sms_contact
 from . import sms_template
 
-# ========== LEVEL 4: Organizational Models ==========
-# Models that depend on contacts
+# 4. THE CORE CAMPAIGN MODEL 
+from . import sms_campaign  
+
+# 5. Campaign Dependencies
+from . import sms_recipient
 from . import sms_mailing_list
 
-# ========== LEVEL 5: Campaign & Messaging ==========
-# Main campaign model (depends on contacts, templates, gateways)
-from . import sms_campaign
+# 6. Logic & Processing
+from . import sms_queue        
+from . import sms_credit       
+from . import sms_incoming     
 
-# Campaign recipients (depends on sms_campaign)
-from . import sms_recipient
-
-# ========== LEVEL 6: Administrative Models ==========
-# Department and administrator models for billing
-from . import sms_department
-from . import sms_administrator
-
-# ========== LEVEL 7: Message Tracking ==========
-# Legacy message models (if you need them alongside campaigns)
-from . import sms_message
-from . import sms_detail
-
-# ========== LEVEL 8: Wizards & Filters ==========
-# Transient models for UI interactions
+# 7. Filters & Reports
 from . import sms_staff_filter
 from . import sms_student_filter
-
-# ========== LEVEL 9: Reporting & Views ==========
-# SQL views and reporting models (loaded last)
 from . import sms_department_expenditure

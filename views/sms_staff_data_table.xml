@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Staff Contact List View (Data Table) -->
-        <record id="view_sms_contact_staff_list" model="ir.ui.view">
-            <field name="name">sms.contact.staff.list</field>
+        <record id="view_sms_contact_student_list" model="ir.ui.view">
+            <field name="name">sms.contact.student.list</field>
             <field name="model">sms.contact</field>
             <field name="priority">20</field>
             <field name="arch" type="xml">
-                <list string="Staff Contacts" 
+                <list string="Student Contacts" 
                       create="true" 
                       edit="true" 
                       delete="true"
@@ -16,12 +15,12 @@
                       decoration-danger="blacklisted"
                       decoration-info="not opt_in">
                     
-                    <field name="student_id" string="Staff ID" optional="show"/>
+                    <field name="student_id" string="Student ID" optional="show"/>
                     <field name="name" string="Full Name"/>
                     <field name="mobile" string="Mobile Number"/>
                     <field name="email" optional="show"/>
                     <field name="gender" optional="show"/>
-                    <field name="department_id" string="Department"/>
+                    <field name="department_id" string="Program/Course"/>
                     <field name="opt_in" widget="boolean_toggle" string="Subscribed"/>
                     <field name="blacklisted" invisible="1"/>
                     <field name="active" invisible="1"/>
@@ -32,13 +31,12 @@
             </field>
         </record>
 
-        <!-- Staff Contact Form View -->
-        <record id="view_sms_contact_staff_form" model="ir.ui.view">
-            <field name="name">sms.contact.staff.form</field>
+        <record id="view_sms_contact_student_form" model="ir.ui.view">
+            <field name="name">sms.contact.student.form</field>
             <field name="model">sms.contact</field>
             <field name="priority">20</field>
             <field name="arch" type="xml">
-                <form string="Staff Contact">
+                <form string="Student Contact">
                     <header>
                         <button name="action_opt_in" string="Subscribe" type="object" 
                                 class="btn-success" invisible="opt_in"/>
@@ -68,18 +66,18 @@
                                 invisible="opt_in or blacklisted"/>
                         
                         <div class="oe_title">
-                            <h1><field name="name" placeholder="Staff Member Name" required="1"/></h1>
+                            <h1><field name="name" placeholder="Student Name" required="1"/></h1>
                         </div>
                         
                         <group>
                             <group string="Contact Information">
-                                <field name="student_id" string="Staff ID" placeholder="e.g., EMP001"/>
-                                <field name="mobile" placeholder="+254712345678" required="1"/>
-                                <field name="email" placeholder="staff@strathmore.edu"/>
+                                <field name="student_id" string="Registration No." placeholder="e.g., 123456"/>
+                                <field name="mobile" placeholder="+2547..." required="1"/>
+                                <field name="email" placeholder="student@strathmore.edu"/>
                                 <field name="gender"/>
                             </group>
-                            <group string="Organization">
-                                <field name="department_id"/>
+                            <group string="Academic Info">
+                                <field name="department_id" string="Program"/>
                                 <field name="contact_type" invisible="1"/>
                                 <field name="partner_id" readonly="1"/>
                             </group>
@@ -108,43 +106,42 @@
                                 </field>
                             </page>
                             <page string="Notes">
-                                <field name="notes" placeholder="Internal notes about this staff member..."/>
+                                <field name="notes" placeholder="Internal notes..."/>
                             </page>
                         </notebook>
                     </sheet>
-                    <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="message_ids"/>
-                    </div>
                 </form>
             </field>
         </record>
 
-        <!-- Staff Contact Search View -->
-        <record id="view_sms_contact_staff_search" model="ir.ui.view">
-            <field name="name">sms.contact.staff.search</field>
+        <record id="view_sms_contact_student_search" model="ir.ui.view">
+            <field name="name">sms.contact.student.search</field>
             <field name="model">sms.contact</field>
             <field name="priority">20</field>
             <field name="arch" type="xml">
-                <search string="Search Staff">
+                <search string="Search Students">
                     <field name="name" string="Name" filter_domain="['|', ('name', 'ilike', self), ('student_id', 'ilike', self)]"/>
                     <field name="mobile" string="Mobile"/>
-                    <field name="student_id" string="Staff ID"/>
-                    <field name="department_id" string="Department"/>
+                    <field name="student_id" string="Reg Number"/>
+                    <field name="department_id" string="Program"/>
                     <field name="email" string="Email"/>
+                    
                     <separator/>
                     <filter string="Subscribed" name="opted_in" domain="[('opt_in', '=', True)]"/>
                     <filter string="Unsubscribed" name="opted_out" domain="[('opt_in', '=', False)]"/>
                     <filter string="Blacklisted" name="blacklisted" domain="[('blacklisted', '=', True)]"/>
+                    
                     <separator/>
                     <filter string="Male" name="male" domain="[('gender', '=', 'male')]"/>
                     <filter string="Female" name="female" domain="[('gender', '=', 'female')]"/>
+                    
                     <separator/>
                     <filter string="Active" name="active" domain="[('active', '=', True)]"/>
                     <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                    
                     <separator/>
-                    <group expand="0" string="Group By">
-                        <filter string="Department" name="group_department" context="{'group_by': 'department_id'}"/>
+                    <group string="Group By">
+                        <filter string="Program" name="group_department" context="{'group_by': 'department_id'}"/>
                         <filter string="Gender" name="group_gender" context="{'group_by': 'gender'}"/>
                         <filter string="Subscription Status" name="group_opt_in" context="{'group_by': 'opt_in'}"/>
                     </group>
@@ -152,9 +149,8 @@
             </field>
         </record>
 
-        <!-- Staff Contact Kanban View (Optional) -->
-        <record id="view_sms_contact_staff_kanban" model="ir.ui.view">
-            <field name="name">sms.contact.staff.kanban</field>
+        <record id="view_sms_contact_student_kanban" model="ir.ui.view">
+            <field name="name">sms.contact.student.kanban</field>
             <field name="model">sms.contact</field>
             <field name="priority">20</field>
             <field name="arch" type="xml">
@@ -201,25 +197,24 @@
             </field>
         </record>
 
-        <!-- Staff Contact Action -->
-        <record id="action_sms_contact_staff" model="ir.actions.act_window">
-            <field name="name">Staff Directory</field>
+        <record id="action_sms_contact_student" model="ir.actions.act_window">
+            <field name="name">Student Directory</field>
             <field name="res_model">sms.contact</field>
             <field name="view_mode">list,kanban,form</field>
-            <field name="view_id" ref="view_sms_contact_staff_list"/>
-            <field name="search_view_id" ref="view_sms_contact_staff_search"/>
-            <field name="domain">[('contact_type', '=', 'staff')]</field>
+            <field name="view_id" ref="view_sms_contact_student_list"/>
+            <field name="search_view_id" ref="view_sms_contact_student_search"/>
+            <field name="domain">[('contact_type', '=', 'student')]</field>
             <field name="context">{
-                'default_contact_type': 'staff',
+                'default_contact_type': 'student',
                 'search_default_active': 1,
                 'search_default_opted_in': 1
             }</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
-                    No staff members found
+                    No students found
                 </p>
                 <p>
-                    Click <b>Create</b> to add staff members manually, or use <b>Import</b> to upload a CSV file.
+                    Click <b>Create</b> to add students manually, or use <b>Import</b> to upload a CSV file.
                 </p>
             </field>
         </record>

@@ -1,5 +1,3 @@
-# models/sms_campaign.py
-
 from odoo import models, fields, api, exceptions, _
 import logging
 import base64
@@ -35,10 +33,7 @@ class SMSCampaign(models.Model):
     message = fields.Text('Message Content', required=True)
     message_length = fields.Integer('Message Length', compute='_compute_message_length')
     
-    personalized = fields.Boolean(
-        'Use Personalization', 
-        help="Replace {name}, {admission_number}, {staff_id} with actual values"
-    )
+    personalized = fields.Boolean('Use Personalization')
     
     target_type = fields.Selection([
         ('all_students', 'All Students'),
@@ -46,449 +41,113 @@ class SMSCampaign(models.Model):
         ('department', 'Department'),
         ('all_departments', 'All Departments'),
         ('mailing_list', 'Mailing List'),
-        ('adhoc', 'Ad Hoc (CSV Upload)'),
+        ('adhoc', 'Ad-hoc (CSV Import)'),
         ('manual', 'Manual Numbers'),
-    ], string='Target Audience', required=True)
+    ], string='Target Audience', required=True, default='manual')
     
-    department_id = fields.Many2one(
-        'hr.department',
-        string='Department',
-        compute='_compute_department_id',
-        store=False,
-        readonly=True
-    )
+    department_id = fields.Many2one('hr.department', string='Department')
+    mailing_list_id = fields.Many2one('sms.mailing.list', string='Mailing List')
     
-    mailing_list_id = fields.Many2one('sms.mailing.list', 'Mailing List')
+    import_file = fields.Binary('Import File', attachment=True)
+    import_filename = fields.Char('Filename')
     
-    import_file = fields.Binary(string='CSV File')
-    import_filename = fields.Char(string='Filename')
-    manual_numbers = fields.Text(string='Manual Numbers')
+    manual_numbers = fields.Text('Phone Numbers')
     
-    recipient_ids = fields.One2many('sms.recipient', 'campaign_id', 'Recipients')
-    total_recipients = fields.Integer('Total Recipients', compute='_compute_recipient_count')
-    
+    schedule_date = fields.Datetime('Scheduled Date')
     send_immediately = fields.Boolean('Send Immediately', default=True)
-    schedule_date = fields.Datetime('Scheduled Send Time')
-    
-    sent_count = fields.Integer('Sent', readonly=True, default=0)
-    failed_count = fields.Integer('Failed', readonly=True, default=0)
-    delivered_count = fields.Integer('Delivered', readonly=True, default=0)
-    pending_count = fields.Integer('Pending', compute='_compute_recipient_count')
-    
-    success_rate = fields.Float('Success Rate', compute='_compute_success_rate', store=True)
-    
-    gateway_id = fields.Many2one(
-        'sms.gateway.configuration', 
-        'SMS Gateway',
-        default=lambda self: self.env['sms.gateway.configuration'].search([
-            ('is_default', '=', True),
-            ('active', '=', True)
-        ], limit=1)
-    )
     
     administrator_id = fields.Many2one(
-        'res.users',
+        'res.users', 
         string='Administrator',
         default=lambda self: self.env.user,
-        required=True,
-        tracking=True
-    )
-    
-    department_id = fields.Many2one(
-        'hr.department',
-        string='Department',
-        store=True,
-        readonly=False,
-        help='Department for billing purposes'
-    )
-    
-    
-    kfs5_processed = fields.Boolean(
-        string='KFS5 Processed',
-        default=False,
-        help='Whether this SMS has been processed in KFS5 financial system'
-    )
-    
-    kfs5_processed_date = fields.Datetime(
-        string='KFS5 Process Date',
         readonly=True
     )
     
-    total_cost = fields.Float(
-        string='Total Cost (KES)',
-        compute='_compute_total_cost',
-        store=True
-    )
-    
-    def _compute_department_id(self):
-        for campaign in self:
-            if campaign.administrator_id and hasattr(campaign.administrator_id, 'department_id'):
-                campaign.department_id = campaign.administrator_id.department_id
-            else:
-                campaign.department_id = False
-    
+recipient_ids = fields.One2many('sms.recipient', 'campaign_id', 'Recipients')
+total_recipients = fields.Integer('Total Recipients', compute='_compute_recipient_stats', store=True)
+
+send_immediately = fields.Boolean('Send Immediately', default=True)
+schedule_date = fields.Datetime('Scheduled Send Time')
+
+sent_count = fields.Integer('Sent', readonly=True, default=0)
+failed_count = fields.Integer('Failed', readonly=True, default=0)
+delivered_count = fields.Integer('Delivered', readonly=True, default=0)
+pending_count = fields.Integer('Pending', compute='_compute_recipient_stats', store=True)
+
+success_rate = fields.Float('Success Rate', compute='_compute_success_rate', store=True)
+
+total_cost = fields.Float('Total Cost', compute='_compute_cost', store=True)
+gateway_id = fields.Many2one('sms.gateway.configuration', string='Gateway', required=True)
+
+kfs5_processed = fields.Boolean('Processed in KFS5', default=False)
+kfs5_processed_date = fields.Datetime('KFS5 Process Date')
+
+# Fields required for Credit Checks in the view
+can_send = fields.Boolean('Can Send', default=True)
+credit_block_reason = fields.Char('Block Reason')
+
     @api.depends('message')
     def _compute_message_length(self):
-        for campaign in self:
-            campaign.message_length = len(campaign.message) if campaign.message else 0
-    
-    @api.depends('recipient_ids')
-    def _compute_recipient_count(self):
-        for campaign in self:
-            campaign.total_recipients = len(campaign.recipient_ids)
-            campaign.pending_count = len(campaign.recipient_ids.filtered(lambda r: r.status == 'pending'))
-    
-    @api.depends('sent_count', 'total_recipients')
-    def _compute_success_rate(self):
-        for campaign in self:
-            if campaign.total_recipients > 0:
-                campaign.success_rate = (campaign.sent_count / campaign.total_recipients) * 100
+        for record in self:
+            record.message_length = len(record.message) if record.message else 0
+
+    @api.depends('recipient_ids', 'recipient_ids.status')
+    def _compute_statistics(self):
+        for record in self:
+            recipients = record.recipient_ids
+            record.total_recipients = len(recipients)
+            record.sent_count = len(recipients.filtered(lambda r: r.status == 'sent'))
+            record.failed_count = len(recipients.filtered(lambda r: r.status == 'failed'))
+            record.pending_count = len(recipients.filtered(lambda r: r.status == 'pending'))
+            
+            if record.total_recipients > 0:
+                record.success_rate = (record.sent_count / record.total_recipients) * 100
             else:
-                campaign.success_rate = 0.0
-    
-    @api.depends('recipient_ids.cost')
-    def _compute_total_cost(self):
-        for campaign in self:
-            campaign.total_cost = sum(campaign.recipient_ids.mapped('cost'))
-    
-    def action_prepare_recipients(self):
-        self.ensure_one()
+                record.success_rate = 0.0
+
+    @api.depends('recipient_ids', 'recipient_ids.cost')
+    def _compute_cost(self):
+        for record in self:
+            record.total_cost = sum(record.recipient_ids.mapped('cost'))
+
+    def action_download_template(self):
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['name', 'phone_number'])
         
-        if not self._check_user_permission():
-            raise exceptions.UserError(_('You do not have permission to send to this audience.'))
+        content = base64.b64encode(output.getvalue().encode('utf-8'))
+        filename = 'sms_recipient_template.csv'
         
-        self.recipient_ids.unlink()
+        attachment = self.env['ir.attachment'].create({
+            'name': filename,
+            'datas': content,
+            'type': 'binary',
+            'res_model': self._name,
+            'res_id': self.id,
+        })
         
-        recipients_data = []
-        
-        if self.target_type == 'all_students':
-            recipients_data = self._get_all_students()
-        elif self.target_type == 'all_staff':
-            recipients_data = self._get_all_staff()
-        elif self.target_type == 'department':
-            recipients_data = self._get_department_contacts()
-        elif self.target_type == 'all_departments':
-            recipients_data = self._get_all_departments_contacts()
-        elif self.target_type == 'mailing_list':
-            recipients_data = self._get_mailing_list_contacts()
-        elif self.target_type == 'adhoc':
-            recipients_data = self._process_adhoc_csv()
-        elif self.target_type == 'manual':
-            recipients_data = self._process_manual_numbers()
-        
-        if recipients_data:
-            self.env['sms.recipient'].create(recipients_data)
-            
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': _('%d recipients prepared!') % len(recipients_data),
-                'type': 'success',
-                'sticky': False,
-            }
+            'type': 'ir.actions.act_url',
+            'url': f'/web/content/{attachment.id}?download=true',
+            'target': 'new',
         }
-    
-    def _check_user_permission(self):
-        user = self.env.user
-        
-        if user.has_group('su_sms.group_sms_system_admin'):
-            return True
-        
-        if user.has_group('su_sms.group_sms_administrator'):
-            if self.target_type in ['all_students', 'all_staff', 'all_departments']:
-                return True
-        
-        if user.has_group('su_sms.group_sms_faculty_admin'):
-            if self.target_type in ['all_students']:
-                return True
-        
-        if user.has_group('su_sms.group_sms_department_admin'):
-            if self.target_type == 'department':
-                user_dept = user.department_id if hasattr(user, 'department_id') else False
-                if self.department_id == user_dept:
-                    return True
-            if self.target_type == 'all_staff':
-                return True
-        
-        if user.has_group('su_sms.group_sms_basic_user'):
-            if self.target_type in ['adhoc', 'manual']:
-                return True
-        
-        if self.target_type in ['adhoc', 'manual']:
-            return True
-        
-        return False
-    
-    def _get_all_students(self):
-        recipients = []
-        contacts = self.env['sms.contact'].search([
-            ('contact_type', '=', 'student'),
-            ('active', '=', True),
-            ('opt_in', '=', True)
-        ])
-        
-        for contact in contacts:
-            if self._check_not_blacklisted(contact.mobile):
-                recipients.append({
-                    'campaign_id': self.id,
-                    'name': contact.name,
-                    'phone_number': contact.mobile,
-                    'admission_number': contact.student_id,
-                    'recipient_type': 'student',
-                })
-        
-        return recipients
-    
-    def _get_all_staff(self):
-        recipients = []
-        
-        domain = [
-            ('contact_type', '=', 'staff'),
-            ('active', '=', True),
-            ('opt_in', '=', True)
-        ]
-        
-        if self.env.user.has_group('su_sms.group_sms_department_admin') and \
-           not self.env.user.has_group('su_sms.group_sms_administrator'):
-            if hasattr(self.env.user, 'department_id') and self.env.user.department_id:
-                domain.append(('department_id', '=', self.env.user.department_id.id))
-        
-        contacts = self.env['sms.contact'].search(domain)
-        
-        for contact in contacts:
-            if self._check_not_blacklisted(contact.mobile):
-                recipients.append({
-                    'campaign_id': self.id,
-                    'name': contact.name,
-                    'phone_number': contact.mobile,
-                    'staff_id': contact.student_id,
-                    'recipient_type': 'staff',
-                    'department': contact.department_id.name if contact.department_id else '',
-                })
-        
-        return recipients
-    
-    def _get_department_contacts(self):
-        if not self.department_id:
-            raise exceptions.UserError(_("Please select a department"))
-        
-        recipients = []
-        contacts = self.env['sms.contact'].search([
-            ('department_id', '=', self.department_id.id),
-            ('active', '=', True),
-            ('opt_in', '=', True)
-        ])
-        
-        for contact in contacts:
-            if self._check_not_blacklisted(contact.mobile):
-                recipients.append({
-                    'campaign_id': self.id,
-                    'name': contact.name,
-                    'phone_number': contact.mobile,
-                    'department': self.department_id.name,
-                    'recipient_type': contact.contact_type,
-                })
-        
-        return recipients
-    
-    def _get_all_departments_contacts(self):
-        recipients = []
-        contacts = self.env['sms.contact'].search([
-            ('department_id', '!=', False),
-            ('active', '=', True),
-            ('opt_in', '=', True)
-        ])
-        
-        for contact in contacts:
-            if self._check_not_blacklisted(contact.mobile):
-                recipients.append({
-                    'campaign_id': self.id,
-                    'name': contact.name,
-                    'phone_number': contact.mobile,
-                    'department': contact.department_id.name if contact.department_id else '',
-                    'recipient_type': contact.contact_type,
-                })
-        
-        return recipients
-    
-    def _get_mailing_list_contacts(self):
-        if not self.mailing_list_id:
-            raise exceptions.UserError(_("Please select a mailing list"))
-        
-        recipients = []
-        for contact in self.mailing_list_id.contact_ids:
-            if contact.opt_in and self._check_not_blacklisted(contact.mobile):
-                recipients.append({
-                    'campaign_id': self.id,
-                    'name': contact.name,
-                    'phone_number': contact.mobile,
-                    'recipient_type': contact.contact_type,
-                })
-        
-        return recipients
-    
-    def _process_adhoc_csv(self):
-        if not self.import_file:
-            raise exceptions.UserError(_("Please upload a CSV file"))
-        
-        recipients = []
-        errors = []
-        
-        try:
-            file_content = base64.b64decode(self.import_file)
-            csv_data = io.StringIO(file_content.decode('utf-8'))
-            csv_reader = csv.DictReader(csv_data)
-            
-            row_num = 1
-            for row in csv_reader:
-                row_num += 1
-                
-                name = row.get('name', '').strip()
-                number = row.get('number', '').strip()
-                
-                if not number:
-                    errors.append(_('Row %d: Missing phone number') % row_num)
-                    continue
-                
-                if not name:
-                    name = number
-                
-                if self._check_not_blacklisted(number):
-                    recipients.append({
-                        'campaign_id': self.id,
-                        'name': name,
-                        'phone_number': number,
-                        'recipient_type': 'other',
-                    })
-                else:
-                    errors.append(_('Row %d: Phone number %s is blacklisted') % (row_num, number))
-            
-            if errors:
-                error_msg = '\n'.join(errors[:10])
-                if len(errors) > 10:
-                    error_msg += _('\n... and %d more errors') % (len(errors) - 10)
-                raise exceptions.UserError(error_msg)
-        
-        except Exception as e:
-            raise exceptions.UserError(_('Error processing CSV file: %s') % str(e))
-        
-        return recipients
-    
-    def _process_manual_numbers(self):
-        if not self.manual_numbers:
-            raise exceptions.UserError(_("Please enter phone numbers"))
-        
-        recipients = []
-        numbers = [n.strip() for n in self.manual_numbers.split(',')]
-        
-        for number in numbers:
-            if number and self._check_not_blacklisted(number):
-                recipients.append({
-                    'campaign_id': self.id,
-                    'name': number,
-                    'phone_number': number,
-                    'recipient_type': 'other',
-                })
-        
-        return recipients
-    
-    def _check_not_blacklisted(self, phone):
-        return not self.env['sms.blacklist'].is_blacklisted(phone)
-    
+
+    def action_prepare_recipients(self):
+        return True
+
     def action_send(self):
         self.ensure_one()
-        
-        if not self.recipient_ids:
-            raise exceptions.UserError(_("No recipients! Please prepare recipients first."))
-        
-        if not self.gateway_id:
-            raise exceptions.UserError(_("No SMS gateway configured!"))
-        
-        self.status = 'in_progress'
-        
-        pending_recipients = self.recipient_ids.filtered(lambda r: r.status == 'pending')
-        
-        batch_size = 100
-        for i in range(0, len(pending_recipients), batch_size):
-            batch = pending_recipients[i:i+batch_size]
-            
-            for recipient in batch:
-                message = self.message
-                
-                if self.personalized:
-                    message = message.replace('{name}', recipient.name or '')
-                    message = message.replace('{admission_number}', recipient.admission_number or '')
-                    message = message.replace('{staff_id}', recipient.staff_id or '')
-                    recipient.personalized_message = message
-                else:
-                    recipient.personalized_message = message
-                
-                try:
-                    success, result = self.gateway_id.send_sms(recipient.phone_number, message)
-                    
-                    if success:
-                        recipient.write({
-                            'status': 'sent',
-                            'sent_date': fields.Datetime.now()
-                        })
-                        self.sent_count += 1
-                    else:
-                        recipient.write({
-                            'status': 'failed',
-                            'error_message': str(result)
-                        })
-                        self.failed_count += 1
-                        
-                except Exception as e:
-                    _logger.error(f"Error sending SMS to {recipient.phone_number}: {str(e)}")
-                    recipient.write({
-                        'status': 'failed',
-                        'error_message': str(e)
-                    })
-                    self.failed_count += 1
-        
-        self.status = 'completed'
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': _('Campaign completed! %d sent, %d failed') % (self.sent_count, self.failed_count),
-                'type': 'success',
-                'sticky': True,
-            }
-        }
-    
+        self.write({'status': 'in_progress'})
+        return True
+
     def action_schedule(self):
         self.ensure_one()
-        
         if not self.schedule_date:
             raise exceptions.UserError(_("Please set a schedule date first!"))
-        
-        if not self.recipient_ids:
-            raise exceptions.UserError(_("No recipients! Please prepare recipients first."))
-        
-        self.status = 'scheduled'
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': _('Campaign scheduled for %s') % self.schedule_date,
-                'type': 'success',
-            }
-        }
-    
+        self.write({'status': 'scheduled'})
+        return True
+
     def action_cancel(self):
         self.ensure_one()
-        self.status = 'cancelled'
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': _('Campaign cancelled'),
-                'type': 'info',
-            }
-        }
+        self.write({'status': 'cancelled'})
+        return True
