@@ -80,7 +80,7 @@
     'views/sms_student_views.xml',
     
     # Data Table Views (NEW)
-    'views/sms_staff_data_table.xml',
+    #'views/sms_staff_data_table.xml',
     'views/sms_student_data_table.xml',
     
     # Dashboard (NEW)
