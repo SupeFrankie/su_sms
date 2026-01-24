@@ -1,111 +1,75 @@
 /** @odoo-module **/
-// static/src/js/campaign_character_counter.js - Real-time Character Counter
 
-import { Component, onWillStart, onMounted, useRef } from "@odoo/owl";
-import { registry } from "@web/core/registry";
-import { useService } from "@web/core/utils/hooks";
-
-const MAX_CHARS = 200;
-const COST_PER_SMS = 1.00; // KES
+const COST_PER_SMS = 1.00;
 
 function calculateSMSParts(length) {
     if (length === 0) return 0;
     if (length <= 160) return 1;
-    // After 160 chars, each SMS is 153 chars (7 for concatenation)
     return 1 + Math.ceil((length - 160) / 153);
 }
 
-// Hook into form view rendering
-document.addEventListener('DOMContentLoaded', function() {
-    setupCharacterCounter();
-});
-
-function setupCharacterCounter() {
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            const messageField = document.querySelector('textarea[name="message"]');
-            if (messageField && !messageField.dataset.counterAttached) {
-                attachCounterToField(messageField);
-            }
-        });
+document.addEventListener('DOMContentLoaded', () => {
+    const observer = new MutationObserver((mutations) => {
+        const messageField = document.querySelector('textarea[name="message"]');
+        if (messageField && !messageField.dataset.counterAttached) {
+            attachCounterToField(messageField);
+        }
     });
 
     observer.observe(document.body, {
         childList: true,
         subtree: true
     });
-}
+});
 
 function attachCounterToField(messageField) {
     messageField.dataset.counterAttached = 'true';
-    
+
     const updateCounter = () => {
         const length = messageField.value.length;
         const parts = calculateSMSParts(length);
+
+        const recipientField = document.querySelector('[name="total_recipients"] span, [name="total_recipients"] input');
+        let recipientCount = 0;
         
-        // Get recipient count from form
-        const recipientCountEl = document.querySelector('[name="total_recipients"] input');
-        const recipientCount = recipientCountEl ? parseInt(recipientCountEl.value) || 0 : 0;
-        
-        const estimatedCost = parts * recipientCount * COST_PER_SMS;
-        
-        // Update character count
-        const charCountEl = document.getElementById('char_count');
-        if (charCountEl) {
-            charCountEl.textContent = length;
-            
-            // Warning colors
-            if (length > MAX_CHARS) {
-                charCountEl.parentElement.classList.add('text-danger');
-                charCountEl.parentElement.classList.remove('text-warning', 'text-success');
-            } else if (length > 160) {
-                charCountEl.parentElement.classList.add('text-warning');
-                charCountEl.parentElement.classList.remove('text-danger', 'text-success');
+        if (recipientField) {
+            if (recipientField.tagName === 'INPUT') {
+                recipientCount = parseInt(recipientField.value) || 0;
             } else {
-                charCountEl.parentElement.classList.add('text-success');
-                charCountEl.parentElement.classList.remove('text-danger', 'text-warning');
+                recipientCount = parseInt(recipientField.innerText) || 0;
             }
         }
-        
-        // Update SMS parts
+
+        const estimatedCost = parts * recipientCount * COST_PER_SMS;
+
+        const charCountEl = document.getElementById('char_count');
         const partsEl = document.getElementById('sms_parts');
-        if (partsEl) {
-            partsEl.textContent = parts;
-        }
-        
-        // Update estimated cost
         const costEl = document.getElementById('estimated_cost');
-        if (costEl) {
-            costEl.textContent = estimatedCost.toFixed(2);
+
+        if (charCountEl) {
+            charCountEl.innerText = length;
+            updateColors(charCountEl, length);
         }
-        
-        // Enforce 200 character limit
-        if (length > MAX_CHARS) {
-            messageField.value = messageField.value.substring(0, MAX_CHARS);
-            
-            // Show warning
-            showWarning('Maximum 200 characters allowed');
-        }
+
+        if (partsEl) partsEl.innerText = parts;
+        if (costEl) costEl.innerText = estimatedCost.toFixed(2);
     };
-    
-    // Attach event listeners
+
     messageField.addEventListener('input', updateCounter);
-    messageField.addEventListener('keyup', updateCounter);
-    messageField.addEventListener('paste', () => setTimeout(updateCounter, 10));
+    messageField.addEventListener('change', updateCounter);
     
-    // Initial update
     updateCounter();
 }
 
-function showWarning(message) {
-    // Use Odoo's notification system
-    if (window.odoo && window.odoo.notification) {
-        window.odoo.notification.add(message, {
-            type: 'warning',
-            sticky: false
-        });
+function updateColors(element, length) {
+    const parent = element.parentElement;
+    if (!parent) return;
+    
+    parent.classList.remove('text-success', 'text-warning', 'text-danger');
+    
+    if (length > 160) {
+        parent.classList.add('text-warning');
     } else {
-        // Fallback to alert
-        console.warn(message);
+        parent.classList.add('text-success');
     }
 }

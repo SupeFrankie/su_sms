@@ -1,226 +1,144 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Campaign List View -->
         <record id="view_sms_campaign_list" model="ir.ui.view">
             <field name="name">sms.campaign.list</field>
             <field name="model">sms.campaign</field>
+            <field name="priority">20</field>
             <field name="arch" type="xml">
-                <list string="SMS Campaigns" decoration-success="status=='completed'" decoration-info="status=='draft'" decoration-warning="status=='in_progress'">
+                <list string="SMS Campaigns" decoration-info="status == 'draft'" decoration-muted="status == 'cancelled'" decoration-success="status == 'completed'">
                     <field name="name"/>
-                    <field name="sms_type_id"/>
-                    <field name="target_type"/>
-                    <field name="administrator_id"/>
                     <field name="schedule_date"/>
-                    <field name="status"/>
                     <field name="total_recipients"/>
                     <field name="sent_count"/>
-                    <field name="failed_count"/>
-                    <field name="total_cost" sum="Total Cost (KES)"/>
-                    <field name="gateway_id"/>
+                    <field name="total_cost" sum="Total Cost"/>
+                    <field name="status" widget="badge" decoration-success="status == 'completed'" decoration-info="status == 'in_progress'" decoration-warning="status == 'scheduled'"/>
+                    <field name="administrator_id" widget="many2one_avatar_user"/>
                 </list>
             </field>
         </record>
 
-        <!-- Campaign Form View -->
         <record id="view_sms_campaign_form" model="ir.ui.view">
-            <field name="name">sms.campaign.form</field>
+            <field name="name">sms.campaign.form.enhanced</field>
             <field name="model">sms.campaign</field>
             <field name="arch" type="xml">
                 <form string="SMS Campaign">
                     <header>
-                        <button name="action_download_template" string="Download CSV Template" type="object" class="btn-info" icon="fa-download" invisible="target_type != 'adhoc'"/>
+                        <button name="action_download_template" string="Download CSV Template" type="object" class="btn-secondary" icon="fa-download"/>
                         <button name="action_prepare_recipients" string="Prepare Recipients" type="object" class="oe_highlight" invisible="status != 'draft'"/>
                         <button name="action_send" string="Send Now" type="object" class="oe_highlight" invisible="status != 'draft' or total_recipients == 0"/>
-                        <button name="action_schedule" string="Schedule" type="object" class="oe_highlight" invisible="status != 'draft' or total_recipients == 0"/>
-                        <button name="action_cancel" string="Cancel" type="object" invisible="status not in ['draft', 'scheduled']"/>
+                        <button name="action_schedule" string="Schedule" type="object" class="btn-primary" invisible="status != 'draft' or total_recipients == 0"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="status in ['completed', 'cancelled']"/>
                         <field name="status" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,completed"/>
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
-                            <button class="oe_stat_button" icon="fa-users" type="object">
-                                <div class="o_field_widget o_stat_info">
-                                    <span class="o_stat_value">
-                                        <field name="total_recipients"/>
-                                    </span>
-                                    <span class="o_stat_text">Recipients</span>
-                                </div>
+                            <button name="action_view_recipients" type="object" class="oe_stat_button" icon="fa-users">
+                                <field name="total_recipients" widget="statinfo" string="Recipients"/>
                             </button>
-                            <button class="oe_stat_button" icon="fa-check-circle" type="object">
+                            <button class="oe_stat_button" icon="fa-paper-plane" type="object">
                                 <div class="o_field_widget o_stat_info">
-                                    <span class="o_stat_value text-success">
-                                        <field name="sent_count"/>
-                                    </span>
-                                    <span class="o_stat_text">Sent</span>
-                                </div>
-                            </button>
-                            <button class="oe_stat_button" icon="fa-times-circle" type="object">
-                                <div class="o_field_widget o_stat_info">
-                                    <span class="o_stat_value text-danger">
-                                        <field name="failed_count"/>
-                                    </span>
-                                    <span class="o_stat_text">Failed</span>
-                                </div>
-                            </button>
-                            <button class="oe_stat_button" icon="fa-money" type="object">
-                                <div class="o_field_widget o_stat_info">
-                                    <span class="o_stat_value">
-                                        KES <field name="total_cost"/>
-                                    </span>
-                                    <span class="o_stat_text">Total Cost</span>
+                                    <span class="o_stat_value"><field name="success_rate" widget="percentage"/></span>
+                                    <span class="o_stat_text">Success</span>
                                 </div>
                             </button>
                         </div>
-                        
+
                         <div class="oe_title">
-                            <h1><field name="name" placeholder="Campaign Name" required="1"/></h1>
+                            <label for="name" class="oe_edit_only"/>
+                            <h1><field name="name" placeholder="e.g. Student Intake 2026 Announcement"/></h1>
                         </div>
-                        
+
                         <group>
-                            <group>
-                                <field name="sms_type_id" required="1" options="{'no_create': True}"/>
-                                <field name="target_type" required="1"/>
-                                <field name="administrator_id" required="1" options="{'no_create': True}"/>
-                                <field name="gateway_id" required="1" options="{'no_create': True}"/>
+                            <group string="Campaign Settings">
+                                <field name="sms_type_id"/>
+                                <field name="gateway_id"/>
+                                <field name="administrator_id" readonly="1"/>
+                                <field name="department_id" readonly="1"/>
                             </group>
-                            <group>
-                                <field name="department_id" options="{'no_create': True}"/>
-                                <field name="send_immediately"/>
-                                <field name="schedule_date" invisible="send_immediately"/>
-                                <field name="personalized"/>
+                            <group string="Audience">
+                                <field name="target_type" widget="radio"/>
+                                <field name="mailing_list_id" invisible="target_type != 'mailing_list'" required="target_type == 'mailing_list'"/>
+                                <field name="import_file" filename="import_filename" invisible="target_type != 'adhoc'" required="target_type == 'adhoc'"/>
+                                <field name="import_filename" invisible="1"/>
+                                <field name="manual_numbers" invisible="target_type != 'manual'" required="target_type == 'manual'" placeholder="+2547..."/>
                             </group>
                         </group>
-                        
-                        <group invisible="target_type not in ['department']">
-                            <field name="department_id" required="target_type == 'department'" force_save="1"/>
-                        </group>
-                        
-                        <group invisible="target_type not in ['mailing_list']">
-                            <field name="mailing_list_id" required="target_type == 'mailing_list'"/>
-                        </group>
-                        
-                        <group invisible="target_type not in ['adhoc']">
-                            <field name="import_file" filename="import_filename" required="target_type == 'adhoc'"/>
-                            <field name="import_filename" invisible="1"/>
-                            <div class="alert alert-info" role="status">
-                                <p><strong>CSV Format:</strong> Download the template above for the correct format.</p>
-                                <p>Columns required: <code>name</code>, <code>number</code></p>
-                            </div>
-                        </group>
-                        
-                        <group invisible="target_type not in ['manual']">
-                            <field name="manual_numbers" widget="text" placeholder="Enter comma-separated phone numbers: +254712345678, +254723456789" required="target_type == 'manual'"/>
-                        </group>
-                        
+
                         <notebook>
-                            <page string="Message">
+                            <page string="Message Content">
                                 <group>
-                                    <field name="message" widget="text" placeholder="Enter your SMS message here..." required="1" nolabel="1"/>
-                                </group>
-                                <group>
-                                    <group>
-                                        <label for="message_length"/>
+                                    <field name="personalized"/>
+                                    <field name="message" placeholder="Type your message here... use {name} for personalization."/>
+                                    
+                                    <div class="o_horizontal_separator text-muted">Statistics</div>
+                                    <div class="d-flex flex-row justify-content-between alert alert-info p-2" role="alert">
                                         <div>
-                                            <field name="message_length" readonly="1" class="oe_inline"/> characters
+                                            <i class="fa fa-align-left mr-1"></i>
+                                            Chars: <b id="char_count">0</b>
                                         </div>
-                                    </group>
-                                </group>
-                                <group invisible="not personalized">
-                                    <div class="alert alert-info" role="status">
-                                        <p><strong>Available placeholders:</strong></p>
-                                        <ul>
-                                            <li>{name} - Recipient name</li>
-                                            <li>{admission_number} - Student admission number</li>
-                                            <li>{staff_id} - Staff ID number</li>
-                                        </ul>
+                                        <div>
+                                            <i class="fa fa-comments-o mr-1"></i>
+                                            Parts: <b id="sms_parts">1</b>
+                                        </div>
+                                        <div>
+                                            <i class="fa fa-money mr-1"></i>
+                                            Est. Cost: KES <b id="estimated_cost">0.00</b>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small mt-1">
+                                        <i>Note: Cost calculation is an estimate based on recipient count.</i>
                                     </div>
                                 </group>
                             </page>
                             
-                            <page string="Recipients">
-                                <field name="recipient_ids">
-                                    <list string="Recipients" editable="bottom" decoration-success="status=='sent'" decoration-danger="status=='failed'">
-                                        <field name="name"/>
-                                        <field name="phone_number"/>
-                                        <field name="recipient_type"/>
-                                        <field name="department"/>
-                                        <field name="status"/>
-                                        <field name="sent_date"/>
-                                        <field name="cost"/>
-                                        <field name="error_message"/>
-                                    </list>
-                                </field>
-                            </page>
-                            
-                            <page string="Statistics">
+                            <page string="Schedule &amp; Tracking">
                                 <group>
-                                    <group string="Sending Statistics">
-                                        <field name="sent_count" readonly="1"/>
-                                        <field name="failed_count" readonly="1"/>
-                                        <field name="pending_count" readonly="1"/>
-                                        <field name="success_rate" readonly="1" widget="percentage"/>
+                                    <group>
+                                        <field name="send_immediately"/>
+                                        <field name="schedule_date" invisible="send_immediately" required="not send_immediately"/>
                                     </group>
-                                    <group string="Financial">
-                                        <field name="total_cost" readonly="1"/>
-                                        <field name="kfs5_processed" readonly="1" groups="su_sms.group_sms_system_admin"/>
-                                        <field name="kfs5_processed_date" readonly="1" groups="su_sms.group_sms_system_admin"/>
+                                    <group>
+                                        <field name="sent_count"/>
+                                        <field name="failed_count"/>
+                                        <field name="total_cost"/>
+                                        <field name="kfs5_processed" readonly="1"/>
                                     </group>
                                 </group>
                             </page>
                         </notebook>
                     </sheet>
-                    <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="message_ids"/>
-                    </div>
-                </form>
+                    </form>
             </field>
         </record>
 
-        <!-- Campaign Search View -->
         <record id="view_sms_campaign_search" model="ir.ui.view">
             <field name="name">sms.campaign.search</field>
             <field name="model">sms.campaign</field>
             <field name="arch" type="xml">
-                <search string="Search SMS Campaigns">
+                <search string="Search Campaigns">
                     <field name="name"/>
-                    <field name="sms_type_id"/>
-                    <field name="administrator_id"/>
-                    <field name="gateway_id"/>
-                    <separator/>
+                    <field name="message"/>
                     <filter string="Draft" name="draft" domain="[('status', '=', 'draft')]"/>
                     <filter string="Scheduled" name="scheduled" domain="[('status', '=', 'scheduled')]"/>
                     <filter string="In Progress" name="in_progress" domain="[('status', '=', 'in_progress')]"/>
                     <filter string="Completed" name="completed" domain="[('status', '=', 'completed')]"/>
-                    <filter string="Failed" name="failed" domain="[('status', '=', 'failed')]"/>
-                    <filter string="Cancelled" name="cancelled" domain="[('status', '=', 'cancelled')]"/>
-                    <separator/>
-                    <filter string="My Campaigns" name="my_campaigns" domain="[('administrator_id', '=', uid)]"/>
-                    <separator/>
-                    <filter string="Not Processed in KFS5" name="not_kfs5" domain="[('kfs5_processed', '=', False)]" groups="su_sms.group_sms_system_admin"/>
-                    <separator/>
-                    <filter string="Scheduled Date" name="schedule_date" date="schedule_date"/>
-                    <filter string="Creation Date" name="create_date" date="create_date"/>
-                    <group>
-                        <filter string="SMS Type" name="group_sms_type" context="{'group_by': 'sms_type_id'}"/>
-                        <filter string="Target Type" name="group_target_type" context="{'group_by': 'target_type'}"/>
+                    <group expand="0" string="Group By">
                         <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
-                        <filter string="Administrator" name="group_administrator" context="{'group_by': 'administrator_id'}"/>
-                        <filter string="Gateway" name="group_gateway" context="{'group_by': 'gateway_id'}"/>
-                        <filter string="Schedule Date" name="group_schedule_date" context="{'group_by': 'schedule_date'}"/>
+                        <filter string="Type" name="group_type" context="{'group_by': 'sms_type_id'}"/>
                     </group>
                 </search>
             </field>
         </record>
 
-        <!-- Campaign Action -->
-        <record id="action_sms_campaign_all" model="ir.actions.act_window">
-            <field name="name">All SMS Campaigns</field>
+        <record id="action_sms_campaign" model="ir.actions.act_window">
+            <field name="name">Campaigns</field>
             <field name="res_model">sms.campaign</field>
             <field name="view_mode">list,form</field>
             <field name="help" type="html">
-                <p class="o_view_nocontent_smiling_face">Create your first SMS Campaign</p>
-                <p>Design and send SMS campaigns to your audience.</p>
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new SMS Campaign
+                </p>
             </field>
         </record>
     </data>

@@ -99,7 +99,7 @@
     'assets': {
         'web.assets_backend': [
             'su_sms/static/src/js/campaign_character_counter.js',
-            'su_sms/static/src/xml/campaign_character_counter.xml',
+            #'su_sms/static/src/xml/campaign_character_counter.xml',
         ],
     },
     
