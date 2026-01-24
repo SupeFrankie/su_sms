@@ -44,73 +44,69 @@
     'author': 'Francis Martine Nyabuto Agata',
     'website': 'https://github.com/SupeFrankie',
     'license': 'LGPL-3',
-    'depends': ['base', 
-                'mail', 
-                'contacts', 
-                'web', 
-                'hr',
-                ],
+    'depends': [
+        'base', 
+        'mail', 
+        'contacts', 
+        'web', 
+        'hr',
+    ],
     'data': [
-       # Security FIRST
-    'security/security_groups.xml',
-    'security/ir.model.access.csv',
-    
-    # Base data (dependencies for other files)
-    'data/sms_type_data.xml',
-    
-    # Wizards (before views that reference them)
-    'wizard/sms_composer_views.xml',
-    'wizard/import_recipients_wizard.xml',
-    
-    # Gateway & Core Models
-    'views/sms_gateway_views.xml',
-    'views/sms_contact_views.xml',
-    'views/sms_blacklist_views.xml',
-    'views/sms_template_views.xml',
-    'views/sms_mailing_list_views.xml',
-    
-    # Campaign views
-    'views/sms_campaign_views.xml',
-    'views/sms_recipient_views.xml',
-    
-    # Module-specific views
-    'views/sms_adhoc_views.xml',
-    'views/sms_manual_views.xml',
-    'views/sms_staff_views.xml',
-    'views/sms_student_views.xml',
-    
-    # Data Table Views (NEW)
-    #'views/sms_staff_data_table.xml',
-    #'views/sms_student_data_table.xml',
-    
-    # Dashboard (NEW)
-    'views/sms_dashboard_views.xml',
-    
-    # Extended views
-    'views/res_users_views.xml',
-    'views/sms_department_expenditure_views.xml',
-    
-    # Menus LAST
-    'views/menu_views.xml',
-    
-    # Templates and other data 
-    'data/sms_template_data.xml',
-    'views/opt_out_templates.xml',
+        # Security FIRST
+        'security/security_groups.xml',
+        'security/ir.model.access.csv',
+        
+        # Base data (dependencies for other files)
+        'data/sms_type_data.xml',
+        
+        # Wizards (before views that reference them)
+        'wizard/sms_composer_views.xml',
+        'wizard/import_recipients_wizard.xml',
+        
+        # Gateway & Core Models
+        'views/sms_gateway_views.xml',
+        'views/sms_contact_views.xml',
+        'views/sms_blacklist_views.xml',
+        'views/sms_template_views.xml',
+        'views/sms_mailing_list_views.xml',
+        
+        # Campaign views
+        'views/sms_campaign_views.xml',
+        'views/sms_recipient_views.xml',
+        
+        # Module-specific views
+        'views/sms_adhoc_views.xml',
+        'views/sms_manual_views.xml',
+        'views/sms_staff_views.xml',
+        'views/sms_student_views.xml',
+        
+        # Dashboard
+        'views/sms_dashboard_views.xml',
+        
+        # Extended views
+        'views/hr_department_views.xml',
+        'views/res_users_views.xml',
+        'views/sms_department_expenditure_views.xml',
+        
+        # Menus LAST
+        'views/menu_views.xml',
+        
+        # Templates and other data 
+        'data/sms_template_data.xml',
+        'views/opt_out_templates.xml',
     ],
     
     'assets': {
-      'web.assets_backend': [
-          'su_sms/static/src/js/campaign_character_counter.js',
-      ],
-    },
-    
-    'external_dependencies': {
-        'python': ['python-dotenv'],
+        'web.assets_backend': [
+            'su_sms/static/src/js/campaign_character_counter.js',
+            'su_sms/static/src/xml/campaign_character_counter.xml',
+        ],
     },
     
     'demo': [
         'data/demo_data.xml',
     ],
+    
     'installable': True,
     'application': True,
     'auto_install': False,

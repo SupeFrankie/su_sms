@@ -11,34 +11,6 @@
                   parent="menu_sms_marketing_root"
                   sequence="10"/>
 
-            <menuitem id="menu_sms_staff"
-                      name="Send to Staff"
-                      parent="menu_sms_modules"
-                      action="action_sms_staff"
-                      sequence="10"
-                      groups="group_sms_department_admin,group_sms_administrator,group_sms_system_admin"/>
-
-            <menuitem id="menu_sms_staff_history"
-                      name="Staff SMS History"
-                      parent="menu_sms_modules"
-                      action="action_sms_staff_history"
-                      sequence="11"
-                      groups="group_sms_department_admin,group_sms_administrator,group_sms_system_admin"/>
-
-            <menuitem id="menu_sms_student"
-                      name="Send to Students"
-                      parent="menu_sms_modules"
-                      action="action_sms_student"
-                      sequence="20"
-                      groups="group_sms_faculty_admin,group_sms_administrator,group_sms_system_admin"/>
-
-            <menuitem id="menu_sms_student_history"
-                      name="Student SMS History"
-                      parent="menu_sms_modules"
-                      action="action_sms_student_history"
-                      sequence="21"
-                      groups="group_sms_faculty_admin,group_sms_administrator,group_sms_system_admin"/>
-
             <menuitem id="menu_sms_adhoc"
                       name="Ad Hoc SMS"
                       parent="menu_sms_modules"

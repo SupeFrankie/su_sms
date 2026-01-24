@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="su_sms.CampaignCharacterCounter">
+        <div class="o_sms_char_counter d-flex align-items-center">
+            <div class="me-3">
+                <span id="char_count" class="fw-bold">0</span>
+                <span class="text-muted"> / 200 characters</span>
+            </div>
+            <div class="me-3">
+                <span id="sms_parts" class="fw-bold">0</span>
+                <span class="text-muted"> SMS parts</span>
+            </div>
+            <div>
+                <span class="text-muted">Est. Cost: KES </span>
+                <span id="estimated_cost" class="fw-bold">0.00</span>
+            </div>
+        </div>
+    </t>
+</templates>

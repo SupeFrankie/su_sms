@@ -22,3 +22,12 @@ access_sms_student_filter_all,sms.student.filter.all,model_sms_student_filter,ba
 access_sms_department_expenditure_manager,sms.department.expenditure.manager,model_sms_department_expenditure,group_sms_system_admin,1,0,0,0
 access_sms_incoming_message,sms.incoming.message,model_sms_incoming_message,base.group_user,1,1,1,1
 access_sms_credit_manager_all,sms.credit.manager.all,model_sms_credit_manager,base.group_user,1,1,1,0
+su_sms.access_sms_tag,access_sms_tag,su_sms.model_sms_tag,base.group_user,1,0,0,0
+su_sms.access_student_program,access_student_program,su_sms.model_student_program,base.group_user,1,0,0,0
+su_sms.access_student_course,access_student_course,su_sms.model_student_course,base.group_user,1,0,0,0
+su_sms.access_student_academic_year,access_student_academic_year,su_sms.model_student_academic_year,base.group_user,1,0,0,0
+su_sms.access_student_enrolment_period,access_student_enrolment_period,su_sms.model_student_enrolment_period,base.group_user,1,0,0,0
+su_sms.access_student_module,access_student_module,su_sms.model_student_module,base.group_user,1,0,0,0
+su_sms.access_student_intake,access_student_intake,su_sms.model_student_intake,base.group_user,1,0,0,0
+su_sms.access_import_sms_recipients,access_import_sms_recipients,su_sms.model_import_sms_recipients,base.group_user,1,0,0,0
+su_sms.access_sms_compose_wizard,access_sms_compose_wizard,su_sms.model_sms_compose_wizard,base.group_user,1,0,0,0
