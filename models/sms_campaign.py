@@ -139,6 +139,22 @@ class SMSCampaign(models.Model):
         for campaign in self:
             campaign.total_cost = sum(campaign.recipient_ids.mapped('cost'))
     
+    def action_view_recipients(self):
+        """Open recipient list for this campaign"""
+        self.ensure_one()
+    
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Campaign Recipients'),
+            'res_model': 'sms.recipient',
+            'view_mode': 'list,form',
+            'domain': [('campaign_id', '=', self.id)],
+            'context': {
+                'default_campaign_id': self.id,
+            }
+        }
+    
+    
     def action_prepare_recipients(self):
         self.ensure_one()
         
