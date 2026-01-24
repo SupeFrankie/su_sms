@@ -1,9 +1,14 @@
-# models/res_users.py
-
 from odoo import models, fields, api, _
 
 class ResUsers(models.Model):
     _inherit = 'res.users'
+    
+    # Add the department_id field that was missing
+    department_id = fields.Many2one(
+        'hr.department',
+        string='Department',
+        help='Department this user belongs to for SMS purposes'
+    )
     
     sms_role = fields.Selection([
         ('basic', 'Basic User'),
@@ -11,9 +16,11 @@ class ResUsers(models.Model):
         ('faculty_admin', 'Faculty Administrator'),
         ('administrator', 'Administrator'),
         ('system_admin', 'System Administrator'),
-    ], string='SMS Role', compute='_compute_sms_role', store=False)
+    ], string='SMS Role', compute='_compute_sms_role', store=True)
     
+    @api.depends('groups_id')
     def _compute_sms_role(self):
+        """Compute SMS role based on security groups"""
         for user in self:
             if user.has_group('su_sms.group_sms_system_admin'):
                 user.sms_role = 'system_admin'
@@ -29,6 +36,7 @@ class ResUsers(models.Model):
                 user.sms_role = False
     
     def get_allowed_departments(self):
+        """Get departments this user can send SMS to"""
         self.ensure_one()
         
         if self.has_group('su_sms.group_sms_system_admin') or \
@@ -47,19 +55,23 @@ class ResUsers(models.Model):
         elif self.has_group('su_sms.group_sms_department_admin'):
             return self.department_id
         
-        return self.env['hr.department']
+        else:
+            return self.env['hr.department']
     
     def can_send_to_all_students(self):
+        """Check if user can send to all students"""
         self.ensure_one()
         return self.has_group('su_sms.group_sms_faculty_admin') or \
                self.has_group('su_sms.group_sms_administrator') or \
                self.has_group('su_sms.group_sms_system_admin')
     
     def can_send_to_all_staff(self):
+        """Check if user can send to all staff"""
         self.ensure_one()
         return self.has_group('su_sms.group_sms_administrator') or \
                self.has_group('su_sms.group_sms_system_admin')
     
     def can_manage_configuration(self):
+        """Check if user can manage system configuration"""
         self.ensure_one()
         return self.has_group('su_sms.group_sms_system_admin')
