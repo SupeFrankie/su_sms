@@ -1,43 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- ============================================ -->
-        <!-- ROOT MENU                                    -->
-        <!-- ============================================ -->
         <menuitem id="menu_sms_marketing_root"
                   name="SU SMS System"
                   web_icon="su_sms,static/description/icon.png"
                   sequence="5"/>
 
-        <!-- ============================================ -->
-        <!-- DASHBOARD                                    -->
-        <!-- ============================================ -->
-        <menuitem id="menu_sms_dashboard"
-                  name="Dashboard"
-                  parent="menu_sms_marketing_root"
-                  action="action_sms_dashboard"
-                  sequence="5"/>
-
-        <!-- ============================================ -->
-        <!-- SEND SMS SUBMENU                             -->
-        <!-- ============================================ -->
         <menuitem id="menu_sms_modules"
-                  name="Send SMS"
+                  name="SMS Modules"
                   parent="menu_sms_marketing_root"
                   sequence="10"/>
 
             <menuitem id="menu_sms_staff"
-                      name="Staff SMS"
+                      name="Send to Staff"
                       parent="menu_sms_modules"
                       action="action_sms_staff"
                       sequence="10"
                       groups="group_sms_department_admin,group_sms_administrator,group_sms_system_admin"/>
 
+            <menuitem id="menu_sms_staff_history"
+                      name="Staff SMS History"
+                      parent="menu_sms_modules"
+                      action="action_sms_staff_history"
+                      sequence="11"
+                      groups="group_sms_department_admin,group_sms_administrator,group_sms_system_admin"/>
+
             <menuitem id="menu_sms_student"
-                      name="Students SMS"
+                      name="Send to Students"
                       parent="menu_sms_modules"
                       action="action_sms_student"
                       sequence="20"
+                      groups="group_sms_faculty_admin,group_sms_administrator,group_sms_system_admin"/>
+
+            <menuitem id="menu_sms_student_history"
+                      name="Student SMS History"
+                      parent="menu_sms_modules"
+                      action="action_sms_student_history"
+                      sequence="21"
                       groups="group_sms_faculty_admin,group_sms_administrator,group_sms_system_admin"/>
 
             <menuitem id="menu_sms_adhoc"
@@ -52,11 +51,8 @@
                       action="action_sms_manual"
                       sequence="40"/>
 
-        <!-- ============================================ -->
-        <!-- MANAGEMENT SUBMENU                           -->
-        <!-- ============================================ -->
         <menuitem id="menu_sms_main"
-                  name="Management"
+                  name="SMS Management"
                   parent="menu_sms_marketing_root"
                   sequence="20"/>
 
@@ -66,27 +62,17 @@
                       action="action_sms_campaign_all"
                       sequence="10"/>
 
+            <menuitem id="menu_sms_template"
+                      name="SMS Templates"
+                      parent="menu_sms_main"
+                      action="action_sms_template"
+                      sequence="15"/>
+
             <menuitem id="menu_sms_contacts" 
-                      name="All Contacts" 
+                      name="Contacts" 
                       parent="menu_sms_main" 
                       action="action_sms_contact" 
                       sequence="20"/>
-
-            <!-- Staff Directory (Data Table) -->
-            <menuitem id="menu_sms_staff_directory"
-                      name="Staff Directory"
-                      parent="menu_sms_main"
-                      action="action_sms_contact_staff"
-                      sequence="21"
-                      groups="group_sms_department_admin,group_sms_administrator,group_sms_system_admin"/>
-
-            <!-- Student Directory (Data Table) -->
-            <menuitem id="menu_sms_student_directory"
-                      name="Student Directory"
-                      parent="menu_sms_main"
-                      action="action_sms_contact_student"
-                      sequence="22"
-                      groups="group_sms_faculty_admin,group_sms_administrator,group_sms_system_admin"/>
 
             <menuitem id="menu_sms_mailing_lists" 
                       name="Mailing Lists" 
@@ -94,21 +80,12 @@
                       action="action_sms_mailing_list" 
                       sequence="30"/>
 
-            <menuitem id="menu_sms_template"
-                      name="Templates"
-                      parent="menu_sms_main"
-                      action="action_sms_template"
-                      sequence="40"/>
-
             <menuitem id="menu_sms_recipients" 
-                      name="All Recipients" 
+                      name="Recipients" 
                       parent="menu_sms_main" 
                       action="action_sms_recipient" 
                       sequence="50"/>
 
-        <!-- ============================================ -->
-        <!-- CONFIGURATION SUBMENU                        -->
-        <!-- ============================================ -->
         <menuitem id="menu_sms_marketing_config"
                   name="Configuration"
                   parent="menu_sms_marketing_root"
@@ -116,33 +93,36 @@
                   groups="group_sms_system_admin"/>
 
             <menuitem id="menu_sms_gateway"
-                      name="SMS Gateway"
+                      name="Gateway Configuration"
                       parent="menu_sms_marketing_config"
                       action="action_sms_gateway_configuration"
                       sequence="10"/>
-
-            <menuitem id="menu_sms_blacklist" 
-                      name="Blacklist" 
-                      parent="menu_sms_marketing_config" 
-                      action="action_sms_blacklist" 
-                      sequence="20"/>
 
             <menuitem id="menu_sms_departments"
                       name="Departments"
                       parent="menu_sms_marketing_config"
                       action="hr.hr_department_kanban_action"
+                      sequence="15"
+                      groups="group_sms_system_admin"/>
+
+            <menuitem id="menu_sms_administrators"
+                      name="Administrators"
+                      parent="menu_sms_marketing_config"
+                      action="base.action_res_users"
+                      sequence="20"
+                      groups="group_sms_system_admin"/>
+
+            <menuitem id="menu_sms_blacklist" 
+                      name="Blacklist" 
+                      parent="menu_sms_marketing_config" 
+                      action="action_sms_blacklist" 
                       sequence="30"/>
 
             <menuitem id="menu_sms_department_expenditure"
                       name="Department Expenditure"
                       parent="menu_sms_marketing_config"
                       action="action_sms_department_expenditure"
-                      sequence="40"/>
-
-            <menuitem id="menu_sms_administrators"
-                      name="User Permissions"
-                      parent="menu_sms_marketing_config"
-                      action="base.action_res_users"
-                      sequence="50"/>
+                      sequence="40"
+                      groups="group_sms_system_admin"/>
     </data>
 </odoo>

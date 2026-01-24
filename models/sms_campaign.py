@@ -480,3 +480,18 @@ class SMSCampaign(models.Model):
                 'type': 'info',
             }
         }
+    
+    def action_download_template(self):
+        """Download CSV template for ad hoc SMS"""
+        self.ensure_one()
+        
+        csv_content = "name,number\n"
+        csv_content += "John Doe,+254712345678\n"
+        csv_content += "Jane Smith,+254723456789\n"
+        csv_content += "Bob Johnson,+254734567890\n"
+        
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'data:text/csv;charset=utf-8,{csv_content}',
+            'target': 'download',
+        }

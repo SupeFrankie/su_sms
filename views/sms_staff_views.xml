@@ -16,6 +16,7 @@
                             <group string="Filters">
                                 <field name="administrator_id" readonly="1"/>
                                 <field name="department_id" options="{'no_create': True}"/>
+                                <field name="gender"/>
                                 <field name="category"/>
                                 <field name="job_status_type"/>
                             </group>
@@ -29,7 +30,7 @@
                             <field name="message" widget="text" placeholder="Enter your message here..." nolabel="1"/>
                         </group>
                         
-                        <div class="alert alert-info mt-3" role="alert">
+                        <div class="alert alert-info mt-3" role="status">
                             <p><strong>SMS Pricing:</strong> 1 SMS = 160 characters | Each additional 153 characters = +1 SMS</p>
                         </div>
                     </sheet>
@@ -43,6 +44,25 @@
             </field>
         </record>
 
+        <!-- Staff SMS History List View -->
+        <record id="view_sms_staff_history_list" model="ir.ui.view">
+            <field name="name">sms.campaign.staff.history.list</field>
+            <field name="model">sms.campaign</field>
+            <field name="arch" type="xml">
+                <list string="Staff SMS History" create="false">
+                    <field name="name"/>
+                    <field name="create_date" string="Sent Date"/>
+                    <field name="administrator_id"/>
+                    <field name="department_id"/>
+                    <field name="total_recipients"/>
+                    <field name="sent_count"/>
+                    <field name="failed_count"/>
+                    <field name="total_cost"/>
+                    <field name="status"/>
+                </list>
+            </field>
+        </record>
+
         <!-- Staff SMS Action -->
         <record id="action_sms_staff" model="ir.actions.act_window">
             <field name="name">Staff SMS</field>
@@ -50,6 +70,16 @@
             <field name="view_mode">form</field>
             <field name="target">new</field>
             <field name="context">{}</field>
+        </record>
+
+        <!-- Staff SMS History Action -->
+        <record id="action_sms_staff_history" model="ir.actions.act_window">
+            <field name="name">Staff SMS History</field>
+            <field name="res_model">sms.campaign</field>
+            <field name="view_mode">list,form</field>
+            <field name="view_id" ref="view_sms_staff_history_list"/>
+            <field name="domain">[('sms_type_id.code', '=', 'staff')]</field>
+            <field name="context">{'default_sms_type_id': ref('sms_type_staff')}</field>
         </record>
     </data>
 </odoo>
