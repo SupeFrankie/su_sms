@@ -1,30 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        
+        <!-- Main SMS System Menu -->
         <menuitem id="menu_sms_marketing_root"
-                  name="SU SMS System"
+                  name="SMS System"
                   web_icon="su_sms,static/description/icon.png"
                   sequence="5"/>
 
+        <!-- SMS Modules (Send SMS) -->
         <menuitem id="menu_sms_modules"
-                  name="SMS Modules"
+                  name="Send SMS"
                   parent="menu_sms_marketing_root"
                   sequence="10"/>
+
+            <menuitem id="menu_sms_staff"
+                      name="Staff SMS"
+                      parent="menu_sms_modules"
+                      action="action_sms_staff"
+                      sequence="10"
+                      groups="su_sms.group_sms_department_admin,group_sms_administrator,group_sms_system_admin"/>
+
+            <menuitem id="menu_sms_student"
+                      name="Students SMS"
+                      parent="menu_sms_modules"
+                      action="action_sms_student"
+                      sequence="20"
+                      groups="su_sms.group_sms_faculty_admin,group_sms_administrator,group_sms_system_admin"/>
 
             <menuitem id="menu_sms_adhoc"
                       name="Ad Hoc SMS"
                       parent="menu_sms_modules"
-                      action="action_sms_campaign_all"
+                      action="action_sms_adhoc"
                       sequence="30"/>
 
             <menuitem id="menu_sms_manual"
                       name="Manual SMS"
                       parent="menu_sms_modules"
-                      action="action_sms_campaign_all"
+                      action="action_sms_manual"
                       sequence="40"/>
 
+        <!-- SMS Management -->
         <menuitem id="menu_sms_main"
-                  name="SMS Management"
+                  name="Campaigns &amp; Contacts"
                   parent="menu_sms_marketing_root"
                   sequence="20"/>
 
@@ -34,46 +52,35 @@
                       action="action_sms_campaign_all"
                       sequence="10"/>
 
-            <menuitem id="menu_sms_template"
-                      name="SMS Templates"
-                      parent="menu_sms_main"
-                      action="action_sms_template"
-                      sequence="15"/>
-
-            <menuitem id="menu_sms_contacts_main"
-                      name="Contacts"
-                      parent="menu_sms_main"
-                      action="action_sms_contact"
+            <menuitem id="menu_sms_contacts" 
+                      name="Contacts" 
+                      parent="menu_sms_main" 
+                      action="action_sms_contact" 
                       sequence="20"/>
 
-            <menuitem id="menu_sms_recipient"
-                      name="Recipients"
-                      parent="menu_sms_main"
-                      action="action_sms_recipient"
-                      sequence="25"/>
+            <menuitem id="menu_sms_mailing_lists" 
+                      name="Mailing Lists" 
+                      parent="menu_sms_main" 
+                      action="action_sms_mailing_list" 
+                      sequence="30"/>
 
+        <!-- Configuration (System Admin Only) -->
         <menuitem id="menu_sms_marketing_config"
                   name="Configuration"
                   parent="menu_sms_marketing_root"
-                  sequence="100"
+                  sequence="90"
                   groups="su_sms.group_sms_system_admin"/>
 
             <menuitem id="menu_sms_gateway"
-                      name="Gateway Configuration"
+                      name="Gateway"
                       parent="menu_sms_marketing_config"
                       action="action_sms_gateway_configuration"
                       sequence="10"/>
 
-            <menuitem id="menu_sms_departments"
-                      name="Departments"
+            <menuitem id="menu_sms_template"
+                      name="Templates"
                       parent="menu_sms_marketing_config"
-                      action="hr.hr_department_kanban_action"
-                      sequence="15"/>
-
-            <menuitem id="menu_sms_administrators"
-                      name="Administrators"
-                      parent="menu_sms_marketing_config"
-                      action="base.action_res_users"
+                      action="action_sms_template"
                       sequence="20"/>
 
             <menuitem id="menu_sms_blacklist" 
@@ -83,7 +90,7 @@
                       sequence="30"/>
 
             <menuitem id="menu_sms_department_expenditure"
-                      name="Department Expenditure"
+                      name="Department Billing"
                       parent="menu_sms_marketing_config"
                       action="action_sms_department_expenditure"
                       sequence="40"/>

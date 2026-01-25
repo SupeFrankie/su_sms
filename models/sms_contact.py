@@ -127,11 +127,10 @@ class SMSContact(models.Model):
     
     @api.depends('mailing_list_ids')
     def _compute_messages_sent(self):
-        Message = self.env['sms.campaign']
+        Message = self.env['sms.message']
         for contact in self:
-            # Count campaigns where this contact was a recipient
-            contact.messages_sent = self.env['sms.recipient'].search_count([
-                ('phone_number', '=', contact.mobile)
+            contact.messages_sent = Message.search_count([
+                ('contact_ids', 'in', contact.id)
             ])
     
     @api.constrains('mobile')
@@ -154,24 +153,19 @@ class SMSContact(models.Model):
     
     @api.model
     def _clean_phone(self, phone):
-        """Normalize phone number to international format"""
         if not phone:
             return ''
         
-        # Remove spaces, dashes, parentheses
         phone = re.sub(r'[\s\-\(\)]', '', phone)
         
-        # Convert to +254 format for Kenya
         if phone.startswith('0'):
             phone = '+254' + phone[1:]
         elif not phone.startswith('+'):
-            # Assume it's a Kenyan number without country code
             phone = '+254' + phone
         
         return phone
     
     def action_opt_in(self):
-        """Opt this contact in for SMS"""
         self.ensure_one()
         self.write({
             'opt_in': True,
@@ -188,7 +182,6 @@ class SMSContact(models.Model):
         }
     
     def action_opt_out(self):
-        """Opt this contact out of SMS"""
         self.ensure_one()
         self.write({
             'opt_in': False,
@@ -205,7 +198,6 @@ class SMSContact(models.Model):
         }
     
     def action_add_to_blacklist(self):
-        """Add this contact to SMS blacklist"""
         self.ensure_one()
         Blacklist = self.env['sms.blacklist']
         
@@ -230,9 +222,8 @@ class SMSContact(models.Model):
             }
         }
     
-    @api.model_create_multi
+    @api.model
     def create(self, vals_list):
-        """Override create to set opt-in/out dates"""
         for vals in vals_list:
             if vals.get('opt_in') and 'opt_in_date' not in vals:
                 vals['opt_in_date'] = fields.Datetime.now()
@@ -241,7 +232,6 @@ class SMSContact(models.Model):
         return super(SMSContact, self).create(vals_list)
 
     def write(self, vals):
-        """Override write to normalize phone and set dates"""
         if 'mobile' in vals:
             vals['mobile'] = self._clean_phone(vals['mobile'])
         
@@ -253,8 +243,8 @@ class SMSContact(models.Model):
         
         return super(SMSContact, self).write(vals)
 
+
 class SMSTag(models.Model):
-    """SMS Tag Model for flexible categorization"""
     _name = 'sms.tag'
     _description = 'SMS Tag'
     _order = 'name'

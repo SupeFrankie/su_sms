@@ -33,7 +33,9 @@ class SMSCampaign(models.Model):
     )
     
     message = fields.Text('Message Content', required=True)
-    message_length = fields.Integer('Message Length', compute='_compute_message_length')
+    
+    message_length = fields.Integer('Message Length', compute='_compute_message_stats')
+    sms_parts = fields.Integer('SMS Parts', compute='_compute_message_stats')
     
     personalized = fields.Boolean('Use Personalization')
     
@@ -49,7 +51,6 @@ class SMSCampaign(models.Model):
     department_id = fields.Many2one('hr.department', string='Department')
     mailing_list_id = fields.Many2one('sms.mailing.list', string='Mailing List')
     
-    # Import fields
     import_file = fields.Binary('Import File', attachment=True)
     import_filename = fields.Char('Filename')
     
@@ -81,10 +82,21 @@ class SMSCampaign(models.Model):
     kfs5_processed = fields.Boolean('Processed in KFS5', default=False)
     kfs5_processed_date = fields.Datetime('KFS5 Process Date')
 
+    # --- UPDATED COMPUTE METHOD ---
     @api.depends('message')
-    def _compute_message_length(self):
+    def _compute_message_stats(self):
         for record in self:
-            record.message_length = len(record.message) if record.message else 0
+            length = len(record.message) if record.message else 0
+            record.message_length = length
+            
+            # Logic: 0-160 chars = 1 SMS. Over 160 uses 153 chars per part (standard concatenation)
+            if length == 0:
+                record.sms_parts = 0
+            elif length <= 160:
+                record.sms_parts = 1
+            else:
+                # Math: Ceiling division for 153 char chunks
+                record.sms_parts = (length + 152) // 153
 
     @api.depends('recipient_ids', 'recipient_ids.status')
     def _compute_statistics(self):
@@ -105,6 +117,7 @@ class SMSCampaign(models.Model):
         for record in self:
             record.total_cost = sum(record.recipient_ids.mapped('cost'))
 
+    # --- ACTIONS ---
     def action_view_recipients(self):
         self.ensure_one()
         return {
@@ -124,16 +137,13 @@ class SMSCampaign(models.Model):
         writer.writerow(['John Doe', '+254712345678'])
         
         content = base64.b64encode(output.getvalue().encode('utf-8'))
-        filename = 'sms_recipient_template.csv'
-        
         attachment = self.env['ir.attachment'].create({
-            'name': filename,
+            'name': 'sms_recipient_template.csv',
             'datas': content,
             'type': 'binary',
             'res_model': self._name,
             'res_id': self.id,
         })
-        
         return {
             'type': 'ir.actions.act_url',
             'url': f'/web/content/{attachment.id}?download=true',

@@ -1,3 +1,5 @@
+# wizard/import_recipients_wizard.py
+
 from odoo import models, fields, api
 from odoo.exceptions import UserError
 import base64

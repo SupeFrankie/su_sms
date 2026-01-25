@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     'name': 'Strathmore University - SMS Module',
     'version': '1.0.0',
@@ -9,7 +8,7 @@
         ================================================
         
         Features:
-        * Send bulk SMS to students, staff, departments and parents
+        * Send bulk SMS to students, staff, clubs, departments and parents
         * Africa's Talking API integration
         * Import recipients from CSV/DOC/DOCX
         * Personalized messages with name, admission number, staff ID
@@ -45,46 +44,61 @@
     'author': 'Francis Martine Nyabuto Agata',
     'website': 'https://github.com/SupeFrankie',
     'license': 'LGPL-3',
-    'depends': [
-        'base',
-        'mail',
-        'contacts',
-        'web',
-        'hr',
-    ],
+    'depends': ['base', 
+                'mail', 
+                'contacts', 
+                'web', 
+                'hr',
+                ],
     'data': [
         # Security FIRST
         'security/security_groups.xml',
         'security/ir.model.access.csv',
         
-        # Base data
+        # Base data (dependencies for other files)
         'data/sms_type_data.xml',
+        'data/gateway_data.xml',
         
-        # Wizards
-        'wizard/sms_composer_views.xml',
-        'wizard/import_recipients_wizard.xml',
+        # --- LOAD WIZARDS EARLY (Dependencies for Views) ---
+        'wizard/sms_composer_views.xml', 
         
-        # Views
+        # --- LOAD VIEW FILES (DEFINING ACTIONS) ---
         'views/sms_gateway_views.xml',
         'views/sms_contact_views.xml',
         'views/sms_blacklist_views.xml',
         'views/sms_template_views.xml',
         'views/sms_mailing_list_views.xml',
+        
+        # Campaign views
         'views/sms_campaign_views.xml',
         'views/sms_recipient_views.xml',
+        
+        # Module-specific views
         'views/sms_adhoc_views.xml',
         'views/sms_manual_views.xml',
         'views/sms_staff_views.xml',
         'views/sms_student_views.xml',
+        
+        # Extended views
         'views/hr_department_views.xml',
         'views/res_users_views.xml',
         'views/sms_department_expenditure_views.xml',
+        
+        # --- LOAD MENUS LAST ---
         'views/menu_views.xml',
         
-        # Templates
+        # Other Wizards
+        'wizard/import_recipients_wizard.xml',
+        
+        # Templates and other data 
         'data/sms_template_data.xml',
-        'views/opt_out_templates.xml',
+        'views/opt_out_templates.xml'
     ],
+    
+    'external_dependencies': {
+        'python': ['dotenv'],
+    },
+    
     'demo': [
         'data/demo_data.xml',
     ],

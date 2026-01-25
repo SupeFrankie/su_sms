@@ -1,4 +1,5 @@
 # models/sms_blacklist.py
+
 from odoo import models, fields, api, exceptions, _
 import re
 
