@@ -94,6 +94,13 @@
         'views/opt_out_templates.xml',
     ],
     
+    'assets': {
+        'web.assets_backend': [
+            'su_sms/static/src/js/campaign_character_counter.js',
+            'su_sms/static/src/xml/campaign_character_counter.xml',
+        ],
+    },
+    
     'demo': [
         'data/demo_data.xml',
     ],

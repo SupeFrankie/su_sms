@@ -1,18 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <t t-name="su_sms.CampaignCharacterCounter">
-        <div class="o_sms_char_counter d-flex align-items-center">
-            <div class="me-3">
-                <span id="char_count" class="fw-bold">0</span>
-                <span class="text-muted"> / 200 characters</span>
-            </div>
-            <div class="me-3">
-                <span id="sms_parts" class="fw-bold">0</span>
-                <span class="text-muted"> SMS parts</span>
-            </div>
-            <div>
-                <span class="text-muted">Est. Cost: KES </span>
-                <span id="estimated_cost" class="fw-bold">0.00</span>
+    <t t-name="su_sms.SmsCampaignCharCounter" owl="1">
+        <div class="o_sms_counter_field">
+            <textarea 
+                class="o_input" 
+                t-att-id="props.id"
+                t-on-input="onInput"
+                placeholder="Type your message here..."
+                rows="4"
+                style="resize: vertical;">
+                <t t-esc="props.record.data[props.name] or ''"/>
+            </textarea>
+            
+            <div class="d-flex justify-content-between mt-1 text-muted small">
+                <span t-att-class="state.count > 160 ? 'text-warning fw-bold' : ''">
+                    <i class="fa fa-text-width"/> <t t-esc="state.count"/> chars
+                </span>
+                <span>
+                    <i class="fa fa-envelope"/> <t t-esc="state.parts"/> SMS part(s)
+                </span>
+                <span>
+                    <i class="fa fa-money"/> KES <t t-esc="state.cost"/> / recipient
+                </span>
             </div>
         </div>
     </t>

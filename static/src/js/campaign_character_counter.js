@@ -1,75 +1,49 @@
 /** @odoo-module **/
 
-const COST_PER_SMS = 1.00;
+import { Component, useState } from "@odoo/owl";
+import { registry } from "@web/core/registry";
+import { standardFieldProps } from "@web/views/fields/standard_field_props";
+import { CharField } from "@web/views/fields/char/char_field";
 
-function calculateSMSParts(length) {
-    if (length === 0) return 0;
-    if (length <= 160) return 1;
-    return 1 + Math.ceil((length - 160) / 153);
-}
+export class SmsCampaignCharCounter extends Component {
+    setup() {
+        this.state = useState({
+            count: this.props.record.data[this.props.name] ? this.props.record.data[this.props.name].length : 0,
+            parts: 1,
+            cost: 0.00
+        });
+    }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const observer = new MutationObserver((mutations) => {
-        const messageField = document.querySelector('textarea[name="message"]');
-        if (messageField && !messageField.dataset.counterAttached) {
-            attachCounterToField(messageField);
-        }
-    });
+    get maxLength() {
+        return 1600; // Hard limit if you want one, otherwise ignore
+    }
 
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-});
-
-function attachCounterToField(messageField) {
-    messageField.dataset.counterAttached = 'true';
-
-    const updateCounter = () => {
-        const length = messageField.value.length;
-        const parts = calculateSMSParts(length);
-
-        const recipientField = document.querySelector('[name="total_recipients"] span, [name="total_recipients"] input');
-        let recipientCount = 0;
+    onInput(ev) {
+        // Update the field value in Odoo
+        this.props.record.update({ [this.props.name]: ev.target.value });
         
-        if (recipientField) {
-            if (recipientField.tagName === 'INPUT') {
-                recipientCount = parseInt(recipientField.value) || 0;
-            } else {
-                recipientCount = parseInt(recipientField.innerText) || 0;
-            }
+        // Update local stats
+        const length = ev.target.value.length;
+        this.state.count = length;
+        
+        // Calculate parts (160 chars = 1 part, >160 = 153 chars per part)
+        if (length === 0) {
+            this.state.parts = 0;
+        } else if (length <= 160) {
+            this.state.parts = 1;
+        } else {
+            this.state.parts = Math.ceil(length / 153);
         }
 
-        const estimatedCost = parts * recipientCount * COST_PER_SMS;
-
-        const charCountEl = document.getElementById('char_count');
-        const partsEl = document.getElementById('sms_parts');
-        const costEl = document.getElementById('estimated_cost');
-
-        if (charCountEl) {
-            charCountEl.innerText = length;
-            updateColors(charCountEl, length);
-        }
-
-        if (partsEl) partsEl.innerText = parts;
-        if (costEl) costEl.innerText = estimatedCost.toFixed(2);
-    };
-
-    messageField.addEventListener('input', updateCounter);
-    messageField.addEventListener('change', updateCounter);
-    
-    updateCounter();
-}
-
-function updateColors(element, length) {
-    const parent = element.parentElement;
-    if (!parent) return;
-    
-    parent.classList.remove('text-success', 'text-warning', 'text-danger');
-    
-    if (length > 160) {
-        parent.classList.add('text-warning');
-    } else {
-        parent.classList.add('text-success');
+        const costPerSms = 0.80; // KES
+        this.state.cost = (this.state.parts * costPerSms).toFixed(2);
     }
 }
+
+SmsCampaignCharCounter.template = "su_sms.SmsCampaignCharCounter";
+SmsCampaignCharCounter.props = {
+    ...standardFieldProps,
+};
+
+// Register the widget as "sms_counter"
+registry.category("fields").add("sms_counter", SmsCampaignCharCounter);
