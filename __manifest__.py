@@ -8,7 +8,7 @@
         ================================================
         
         Features:
-        * Send bulk SMS to students, staff, clubs, departments and parents
+        * Send bulk SMS to students, staff, departments and parents
         * Africa's Talking API integration
         * Import recipients from CSV/DOC/DOCX
         * Personalized messages with name, admission number, staff ID
@@ -50,6 +50,7 @@
         'contacts', 
         'web', 
         'hr',
+        'sms',
     ],
     'data': [
         # Security FIRST
@@ -80,9 +81,6 @@
         'views/sms_staff_views.xml',
         'views/sms_student_views.xml',
         
-        # Dashboard
-        'views/sms_dashboard_views.xml',
-        
         # Extended views
         'views/hr_department_views.xml',
         'views/res_users_views.xml',
@@ -95,13 +93,6 @@
         'data/sms_template_data.xml',
         'views/opt_out_templates.xml',
     ],
-    
-    'assets': {
-        'web.assets_backend': [
-            'su_sms/static/src/js/campaign_character_counter.js',
-            #'su_sms/static/src/xml/campaign_character_counter.xml',
-        ],
-    },
     
     'demo': [
         'data/demo_data.xml',

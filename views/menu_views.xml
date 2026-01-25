@@ -14,13 +14,13 @@
             <menuitem id="menu_sms_adhoc"
                       name="Ad Hoc SMS"
                       parent="menu_sms_modules"
-                      action="action_sms_adhoc"
+                      action="action_sms_campaign_all"
                       sequence="30"/>
 
             <menuitem id="menu_sms_manual"
                       name="Manual SMS"
                       parent="menu_sms_modules"
-                      action="action_sms_manual"
+                      action="action_sms_campaign_all"
                       sequence="40"/>
 
         <menuitem id="menu_sms_main"
@@ -40,29 +40,23 @@
                       action="action_sms_template"
                       sequence="15"/>
 
-            <menuitem id="menu_sms_contacts" 
-                      name="Contacts" 
-                      parent="menu_sms_main" 
-                      action="action_sms_contact" 
+            <menuitem id="menu_sms_contacts_main"
+                      name="Contacts"
+                      parent="menu_sms_main"
+                      action="action_sms_contact"
                       sequence="20"/>
 
-            <menuitem id="menu_sms_mailing_lists" 
-                      name="Mailing Lists" 
-                      parent="menu_sms_main" 
-                      action="action_sms_mailing_list" 
-                      sequence="30"/>
-
-            <menuitem id="menu_sms_recipients" 
-                      name="Recipients" 
-                      parent="menu_sms_main" 
-                      action="action_sms_recipient" 
-                      sequence="50"/>
+            <menuitem id="menu_sms_recipient"
+                      name="Recipients"
+                      parent="menu_sms_main"
+                      action="action_sms_recipient"
+                      sequence="25"/>
 
         <menuitem id="menu_sms_marketing_config"
                   name="Configuration"
                   parent="menu_sms_marketing_root"
-                  sequence="90"
-                  groups="group_sms_system_admin"/>
+                  sequence="100"
+                  groups="su_sms.group_sms_system_admin"/>
 
             <menuitem id="menu_sms_gateway"
                       name="Gateway Configuration"
@@ -74,15 +68,13 @@
                       name="Departments"
                       parent="menu_sms_marketing_config"
                       action="hr.hr_department_kanban_action"
-                      sequence="15"
-                      groups="group_sms_system_admin"/>
+                      sequence="15"/>
 
             <menuitem id="menu_sms_administrators"
                       name="Administrators"
                       parent="menu_sms_marketing_config"
                       action="base.action_res_users"
-                      sequence="20"
-                      groups="group_sms_system_admin"/>
+                      sequence="20"/>
 
             <menuitem id="menu_sms_blacklist" 
                       name="Blacklist" 
@@ -94,7 +86,6 @@
                       name="Department Expenditure"
                       parent="menu_sms_marketing_config"
                       action="action_sms_department_expenditure"
-                      sequence="40"
-                      groups="group_sms_system_admin"/>
+                      sequence="40"/>
     </data>
 </odoo>
