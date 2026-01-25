@@ -1,268 +1,162 @@
-from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
-import re
+# models/sms_campaign.py
 
+from odoo import models, fields, api, exceptions, _
+import logging
+import base64
+import csv
+import io
 
-class SMSContact(models.Model):
+_logger = logging.getLogger(__name__)
+
+class SMSCampaign(models.Model):
+    _name = 'sms.campaign'
+    _description = 'SMS Campaign'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _order = 'create_date desc'
     
-    _name = 'sms.contact'
-    _description = 'SMS Contact'
-    _order = 'name'
-    _rec_name = 'name'
+    name = fields.Char('Campaign Name', required=True, tracking=True)
     
-    name = fields.Char(
-        string='Full Name',
+    status = fields.Selection([
+        ('draft', 'Draft'),
+        ('scheduled', 'Scheduled'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    ], default='draft', tracking=True, string='Status')
+    
+    sms_type_id = fields.Many2one(
+        'sms.type',
+        string='SMS Type',
         required=True,
-        index=True,
-        help='Contact\'s full name'
+        tracking=True
     )
     
-    mobile = fields.Char(
-        string='Mobile Number',
-        required=True,
-        index=True,
-        help='Mobile number in international format (+254...)'
-    )
+    message = fields.Text('Message Content', required=True)
+    message_length = fields.Integer('Message Length', compute='_compute_message_length')
     
-    email = fields.Char(
-        string='Email',
-        help='Optional email address'
-    )
+    personalized = fields.Boolean('Use Personalization')
     
-    contact_type = fields.Selection([
-        ('student', 'Student'),
-        ('staff', 'Staff'),
-        ('external', 'External')
-    ], string='Contact Type', required=True, default='student',
-       help='Type of contact for categorization')
+    target_type = fields.Selection([
+        ('all_students', 'All Students'),
+        ('all_staff', 'All Staff'),
+        ('department', 'Department'),
+        ('mailing_list', 'Mailing List'),
+        ('adhoc', 'Ad-hoc (CSV Import)'),
+        ('manual', 'Manual Numbers'),
+    ], string='Target Audience', required=True, default='manual')
     
-    student_id = fields.Char(
-        string='Student/Staff ID',
-        index=True,
-        help='Admission number for students or Staff ID for staff'
-    )
+    department_id = fields.Many2one('hr.department', string='Department')
+    mailing_list_id = fields.Many2one('sms.mailing.list', string='Mailing List')
     
-    department_id = fields.Many2one(
-        'hr.department',
-        string='Department',
-        help='Department for staff or faculty for students'
-    )
+    # Import fields
+    import_file = fields.Binary('Import File', attachment=True)
+    import_filename = fields.Char('Filename')
     
-    tag_ids = fields.Many2many(
-        'sms.tag',
-        string='Tags',
-        help='Tags for flexible categorization (e.g., Year 1, Finalists, etc.)'
-    )
+    manual_numbers = fields.Text('Phone Numbers')
     
-    opt_in = fields.Boolean(
-        string='Opt-in',
-        default=True,
-        help='Whether contact agreed to receive SMS'
-    )
+    schedule_date = fields.Datetime('Scheduled Date', tracking=True)
+    send_immediately = fields.Boolean('Send Immediately', default=True)
     
-    opt_in_date = fields.Datetime(
-        string='Opt-in Date',
+    administrator_id = fields.Many2one(
+        'res.users', 
+        string='Administrator',
+        default=lambda self: self.env.user,
         readonly=True,
-        help='When contact opted in'
+        tracking=True
     )
     
-    opt_out_date = fields.Datetime(
-        string='Opt-out Date',
-        readonly=True,
-        help='When contact opted out'
-    )
+    recipient_ids = fields.One2many('sms.recipient', 'campaign_id', string='Recipients')
     
-    blacklisted = fields.Boolean(
-        string='Blacklisted',
-        compute='_compute_blacklisted',
-        store=True,
-        help='Whether this contact is on the blacklist'
-    )
+    # Statistics
+    total_recipients = fields.Integer(compute='_compute_statistics', store=True)
+    sent_count = fields.Integer(compute='_compute_statistics', store=True)
+    failed_count = fields.Integer(compute='_compute_statistics', store=True)
+    pending_count = fields.Integer(compute='_compute_statistics', store=True)
+    success_rate = fields.Float(compute='_compute_success_rate', store=False)
     
-    mailing_list_ids = fields.Many2many(
-        'sms.mailing.list',
-        string='Mailing Lists',
-        help='Lists this contact is subscribed to'
-    )
+    total_cost = fields.Float('Total Cost', compute='_compute_cost', store=True)
+    gateway_id = fields.Many2one('sms.gateway.configuration', string='Gateway', required=True)
     
-    messages_sent = fields.Integer(
-        string='Messages Sent',
-        compute='_compute_messages_sent',
-        store=True,
-        help='Total number of SMS sent to this contact'
-    )
-    
-    last_message_date = fields.Datetime(
-        string='Last Message Date',
-        readonly=True,
-        help='When we last sent an SMS to this contact'
-    )
-    
-    active = fields.Boolean(
-        default=True,
-        help='Inactive contacts won\'t appear in searches'
-    )
-    
-    notes = fields.Text(
-        string='Notes',
-        help='Internal notes about this contact'
-    )
-    
-    partner_id = fields.Many2one(
-        'res.partner',
-        string='Related Contact',
-        help='Link to Odoo contact if this person exists there'
-    )
-    
-    @api.depends('mobile')
-    def _compute_blacklisted(self):
-        Blacklist = self.env['sms.blacklist']
-        for contact in self:
-            clean_mobile = self._clean_phone(contact.mobile)
-            contact.blacklisted = bool(
-                Blacklist.search([('phone_number', '=', clean_mobile), ('active', '=', True)], limit=1)
-            )
-    
-    @api.depends('mailing_list_ids')
-    def _compute_messages_sent(self):
-        for contact in self:
-            contact.messages_sent = 0
-    
-    @api.constrains('mobile')
-    def _check_mobile(self):
-        for contact in self:
-            if not contact.mobile:
-                raise ValidationError(_('Mobile number is required.'))
-            
-            clean_mobile = self._clean_phone(contact.mobile)
-            
-            duplicate = self.search([
-                ('mobile', '=', clean_mobile),
-                ('id', '!=', contact.id)
-            ], limit=1)
-            
-            if duplicate:
-                raise ValidationError(_(
-                    'A contact with mobile number %s already exists: %s'
-                ) % (clean_mobile, duplicate.name))
-    
-    @api.model
-    def _clean_phone(self, phone):
-        """
-        Clean and normalize phone numbers.
-        - Removes spaces, dashes, parentheses
-        - Keeps international numbers as-is if they start with +
-        - Only adds +254 for Kenyan numbers without country code
-        """
-        if not phone:
-            return ''
-        
-        # Remove spaces, dashes, parentheses
-        phone = re.sub(r'[\s\-\(\)]', '', phone)
-        
-        # If already has +, it's international - keep as is
-        if phone.startswith('+'):
-            return phone
-        
-        # If starts with 254, add + prefix
-        if phone.startswith('254'):
-            return '+' + phone
-        
-        # If starts with 0, assume Kenyan number
-        if phone.startswith('0'):
-            return '+254' + phone[1:]
-        
-        # If starts with 7 or 1 (common mobile prefixes), assume Kenyan
-        if phone.startswith(('7', '1')):
-            return '+254' + phone
-        
-        # Otherwise, keep as-is (might be international without +)
-        return phone
-    
-    def action_opt_in(self):
-        self.ensure_one()
-        self.write({
-            'opt_in': True,
-            'opt_in_date': fields.Datetime.now()
-        })
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': _('%s has been opted in.') % self.name,
-                'type': 'success',
-                'sticky': False,
-            }
-        }
-    
-    def action_opt_out(self):
-        self.ensure_one()
-        self.write({
-            'opt_in': False,
-            'opt_out_date': fields.Datetime.now()
-        })
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': _('%s has been opted out.') % self.name,
-                'type': 'info',
-                'sticky': False,
-            }
-        }
-    
-    def action_add_to_blacklist(self):
-        self.ensure_one()
-        Blacklist = self.env['sms.blacklist']
-        
-        if self.blacklisted:
-            raise ValidationError(_('This contact is already blacklisted.'))
-        
-        Blacklist.create({
-            'phone_number': self._clean_phone(self.mobile),
-            'reason': 'manual',
-            'notes': _('Added from contact: %s') % self.name,
-        })
-        
-        self._compute_blacklisted()
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'message': _('%s has been blacklisted.') % self.name,
-                'type': 'warning',
-                'sticky': False,
-            }
-        }
-    
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('opt_in') and 'opt_in_date' not in vals:
-                vals['opt_in_date'] = fields.Datetime.now()
-            if not vals.get('opt_in') and 'opt_out_date' not in vals:
-                vals['opt_out_date'] = fields.Datetime.now()
-        return super(SMSContact, self).create(vals_list)
+    kfs5_processed = fields.Boolean('Processed in KFS5', default=False)
+    kfs5_processed_date = fields.Datetime('KFS5 Process Date')
 
-    def write(self, vals):
-        if 'mobile' in vals:
-            vals['mobile'] = self._clean_phone(vals['mobile'])
-        
-        if 'opt_in' in vals:
-            if vals['opt_in']:
-                vals['opt_in_date'] = fields.Datetime.now()
+    @api.depends('message')
+    def _compute_message_length(self):
+        for record in self:
+            record.message_length = len(record.message) if record.message else 0
+
+    @api.depends('recipient_ids', 'recipient_ids.status')
+    def _compute_statistics(self):
+        for record in self:
+            recipients = record.recipient_ids
+            record.total_recipients = len(recipients)
+            record.sent_count = len(recipients.filtered(lambda r: r.status == 'sent'))
+            record.failed_count = len(recipients.filtered(lambda r: r.status == 'failed'))
+            record.pending_count = len(recipients.filtered(lambda r: r.status == 'pending'))
+
+    @api.depends('total_recipients', 'sent_count')
+    def _compute_success_rate(self):
+        for record in self:
+            if record.total_recipients > 0:
+                record.success_rate = (record.sent_count / record.total_recipients) * 100
             else:
-                vals['opt_out_date'] = fields.Datetime.now()
+                record.success_rate = 0.0
+
+    @api.depends('recipient_ids', 'recipient_ids.cost')
+    def _compute_cost(self):
+        for record in self:
+            record.total_cost = sum(record.recipient_ids.mapped('cost'))
+
+    def action_view_recipients(self):
+        self.ensure_one()
+        return {
+            'name': _('Recipients'),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'list,form',
+            'res_model': 'sms.recipient',
+            'domain': [('campaign_id', '=', self.id)],
+            'context': {'default_campaign_id': self.id},
+        }
+
+    def action_download_template(self):
+        self.ensure_one()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['name', 'phone_number'])
+        writer.writerow(['John Doe', '+254712345678'])
         
-        return super(SMSContact, self).write(vals)
+        content = base64.b64encode(output.getvalue().encode('utf-8'))
+        filename = 'sms_recipient_template.csv'
+        
+        attachment = self.env['ir.attachment'].create({
+            'name': filename,
+            'datas': content,
+            'type': 'binary',
+            'res_model': self._name,
+            'res_id': self.id,
+        })
+        
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/web/content/{attachment.id}?download=true',
+            'target': 'new',
+        }
 
+    def action_prepare_recipients(self):
+        return True
 
-class SMSTag(models.Model):
-    _name = 'sms.tag'
-    _description = 'SMS Tag'
-    _order = 'name'
-    
-    name = fields.Char(string='Tag Name', required=True)
-    color = fields.Integer(string='Color', help='Color index for UI')
-    active = fields.Boolean(default=True)
+    def action_send(self):
+        self.ensure_one()
+        self.write({'status': 'in_progress'})
+        return True
+
+    def action_schedule(self):
+        self.ensure_one()
+        self.write({'status': 'scheduled'})
+        return True
+
+    def action_cancel(self):
+        self.ensure_one()
+        self.write({'status': 'cancelled'})
+        return True

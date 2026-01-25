@@ -9,8 +9,9 @@ from . import sms_gateway_config
 
 # Models with basic dependencies
 from . import hr_department
-from . import res_partner
 from . import res_users
+from . import res_partner
+
 
 # Contact and related models
 from . import sms_contact

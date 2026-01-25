@@ -90,10 +90,19 @@
                         <notebook>
                             <page string="Message">
                                 <group>
-                                    <field name="message" widget="sms_counter" placeholder="Enter SMS..." required="1" nolabel="1"/>
+                                    <field name="message" widget="text" placeholder="Enter SMS message here..." required="1" nolabel="1"/>
                                 </group>
                                 <group>
-                                    <field name="message_length" readonly="1"/>
+                                    <group>
+                                        <label for="message_length"/>
+                                        <div>
+                                            <span><field name="message_length" readonly="1"/> characters</span>
+                                            <span class="ml-3 text-muted">
+                                                (<t t-if="message_length &lt;= 200">1 SMS</t>
+                                                <t t-else=""><t t-esc="int((message_length - 200) / 153) + 2"/> SMS parts</t>)
+                                            </span>
+                                        </div>
+                                    </group>
                                 </group>
                             </page>
                             
@@ -109,7 +118,7 @@
                             </page>
                         </notebook>
                     </sheet>
-                    </form>
+                </form>
             </field>
         </record>
 
