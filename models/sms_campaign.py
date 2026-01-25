@@ -105,8 +105,6 @@ class SMSCampaign(models.Model):
         for record in self:
             record.total_cost = sum(record.recipient_ids.mapped('cost'))
 
-    # --- ACTIONS ---
-
     def action_view_recipients(self):
         self.ensure_one()
         return {
@@ -119,7 +117,6 @@ class SMSCampaign(models.Model):
         }
 
     def action_download_template(self):
-        """Generates and downloads a CSV template for Ad-hoc imports"""
         self.ensure_one()
         output = io.StringIO()
         writer = csv.writer(output)

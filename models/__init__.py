@@ -25,10 +25,6 @@ from . import sms_mailing_list
 from . import sms_campaign
 from . import sms_recipient
 
-# Filter wizards
-from . import sms_staff_filter
-from . import sms_student_filter
-
 # Expenditure reporting
 from . import sms_department_expenditure
 

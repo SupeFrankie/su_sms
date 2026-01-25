@@ -1,5 +1,3 @@
-# models/sms_contact.py
-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 import re
@@ -12,44 +10,109 @@ class SMSContact(models.Model):
     _order = 'name'
     _rec_name = 'name'
     
-    name = fields.Char(string='Full Name', required=True, index=True)
-    mobile = fields.Char(string='Mobile Number', required=True, index=True)
-    email = fields.Char(string='Email')
+    name = fields.Char(
+        string='Full Name',
+        required=True,
+        index=True,
+        help='Contact\'s full name'
+    )
+    
+    mobile = fields.Char(
+        string='Mobile Number',
+        required=True,
+        index=True,
+        help='Mobile number in international format (+254...)'
+    )
+    
+    email = fields.Char(
+        string='Email',
+        help='Optional email address'
+    )
     
     contact_type = fields.Selection([
         ('student', 'Student'),
         ('staff', 'Staff'),
         ('external', 'External')
-    ], string='Contact Type', required=True, default='student', index=True)
+    ], string='Contact Type', required=True, default='student',
+       help='Type of contact for categorization')
     
-    # Demographics
-    gender = fields.Selection([
-        ('all', 'All'),
-        ('male', 'Male'),
-        ('female', 'Female')
-    ], string='Gender', index=True)
+    student_id = fields.Char(
+        string='Student/Staff ID',
+        index=True,
+        help='Admission number for students or Staff ID for staff'
+    )
     
-    student_id = fields.Char(string='Student/Staff ID', index=True)
+    department_id = fields.Many2one(
+        'hr.department',
+        string='Department',
+        help='Department for staff or faculty for students'
+    )
     
-    department_id = fields.Many2one('hr.department', string='Department', index=True)
+    tag_ids = fields.Many2many(
+        'sms.tag',
+        string='Tags',
+        help='Tags for flexible categorization (e.g., Year 1, Finalists, etc.)'
+    )
     
-    tag_ids = fields.Many2many('sms.tag', string='Tags')
+    opt_in = fields.Boolean(
+        string='Opt-in',
+        default=True,
+        help='Whether contact agreed to receive SMS'
+    )
     
-    opt_in = fields.Boolean(string='Opt-in', default=True)
-    opt_in_date = fields.Datetime(string='Opt-in Date', readonly=True)
-    opt_out_date = fields.Datetime(string='Opt-out Date', readonly=True)
+    opt_in_date = fields.Datetime(
+        string='Opt-in Date',
+        readonly=True,
+        help='When contact opted in'
+    )
     
-    blacklisted = fields.Boolean(string='Blacklisted', compute='_compute_blacklisted', store=True)
+    opt_out_date = fields.Datetime(
+        string='Opt-out Date',
+        readonly=True,
+        help='When contact opted out'
+    )
     
-    mailing_list_ids = fields.Many2many('sms.mailing.list', string='Mailing Lists')
+    blacklisted = fields.Boolean(
+        string='Blacklisted',
+        compute='_compute_blacklisted',
+        store=True,
+        help='Whether this contact is on the blacklist'
+    )
     
-    messages_sent = fields.Integer(string='Messages Sent', compute='_compute_messages_sent', store=True)
-    last_message_date = fields.Datetime(string='Last Message Date', readonly=True)
+    mailing_list_ids = fields.Many2many(
+        'sms.mailing.list',
+        string='Mailing Lists',
+        help='Lists this contact is subscribed to'
+    )
     
-    active = fields.Boolean(default=True)
-    notes = fields.Text(string='Notes')
+    messages_sent = fields.Integer(
+        string='Messages Sent',
+        compute='_compute_messages_sent',
+        store=True,
+        help='Total number of SMS sent to this contact'
+    )
     
-    partner_id = fields.Many2one('res.partner', string='Related Contact')
+    last_message_date = fields.Datetime(
+        string='Last Message Date',
+        readonly=True,
+        help='When we last sent an SMS to this contact'
+    )
+    
+    active = fields.Boolean(
+        default=True,
+        help='Inactive contacts won\'t appear in searches'
+    )
+    
+    notes = fields.Text(
+        string='Notes',
+        help='Internal notes about this contact'
+    )
+    
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Related Contact',
+        help='Link to Odoo contact if this person exists there'
+    )
     
     @api.depends('mobile')
     def _compute_blacklisted(self):
@@ -62,9 +125,8 @@ class SMSContact(models.Model):
     
     @api.depends('mailing_list_ids')
     def _compute_messages_sent(self):
-        Message = self.env['sms.message']
         for contact in self:
-            contact.messages_sent = Message.search_count([('contact_ids', 'in', contact.id)])
+            contact.messages_sent = 0
     
     @api.constrains('mobile')
     def _check_mobile(self):
@@ -86,45 +148,66 @@ class SMSContact(models.Model):
     
     @api.model
     def _clean_phone(self, phone):
-        """Normalize phone number to E.164 format"""
+        """
+        Clean and normalize phone numbers.
+        - Removes spaces, dashes, parentheses
+        - Keeps international numbers as-is if they start with +
+        - Only adds +254 for Kenyan numbers without country code
+        """
         if not phone:
             return ''
         
-        phone = re.sub(r'[\s\-\(\)\.]', '', str(phone).strip())
+        # Remove spaces, dashes, parentheses
+        phone = re.sub(r'[\s\-\(\)]', '', phone)
         
+        # If already has +, it's international - keep as is
         if phone.startswith('+'):
             return phone
         
-        if phone.startswith('0') and len(phone) == 10:
+        # If starts with 254, add + prefix
+        if phone.startswith('254'):
+            return '+' + phone
+        
+        # If starts with 0, assume Kenyan number
+        if phone.startswith('0'):
             return '+254' + phone[1:]
-        elif phone.startswith('254') and len(phone) == 12:
-            return '+' + phone
-        elif len(phone) == 9:
+        
+        # If starts with 7 or 1 (common mobile prefixes), assume Kenyan
+        if phone.startswith(('7', '1')):
             return '+254' + phone
-        else:
-            return '+' + phone
+        
+        # Otherwise, keep as-is (might be international without +)
+        return phone
     
     def action_opt_in(self):
         self.ensure_one()
-        self.write({'opt_in': True, 'opt_in_date': fields.Datetime.now()})
+        self.write({
+            'opt_in': True,
+            'opt_in_date': fields.Datetime.now()
+        })
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'message': _('%s has been opted in.') % self.name,
                 'type': 'success',
+                'sticky': False,
             }
         }
     
     def action_opt_out(self):
         self.ensure_one()
-        self.write({'opt_in': False, 'opt_out_date': fields.Datetime.now()})
+        self.write({
+            'opt_in': False,
+            'opt_out_date': fields.Datetime.now()
+        })
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
                 'message': _('%s has been opted out.') % self.name,
                 'type': 'info',
+                'sticky': False,
             }
         }
     
@@ -149,6 +232,7 @@ class SMSContact(models.Model):
             'params': {
                 'message': _('%s has been blacklisted.') % self.name,
                 'type': 'warning',
+                'sticky': False,
             }
         }
     
@@ -159,7 +243,7 @@ class SMSContact(models.Model):
                 vals['opt_in_date'] = fields.Datetime.now()
             if not vals.get('opt_in') and 'opt_out_date' not in vals:
                 vals['opt_out_date'] = fields.Datetime.now()
-        return super().create(vals_list)
+        return super(SMSContact, self).create(vals_list)
 
     def write(self, vals):
         if 'mobile' in vals:
@@ -171,7 +255,7 @@ class SMSContact(models.Model):
             else:
                 vals['opt_out_date'] = fields.Datetime.now()
         
-        return super().write(vals)
+        return super(SMSContact, self).write(vals)
 
 
 class SMSTag(models.Model):
