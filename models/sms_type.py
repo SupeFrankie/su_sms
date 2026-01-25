@@ -1,3 +1,5 @@
+# models/sms_type.py
+
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 

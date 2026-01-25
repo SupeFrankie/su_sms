@@ -9,6 +9,20 @@ import os
 
 _logger = logging.getLogger(__name__)
 
+# Try to import dotenv, but don't fail if it's not available
+try:
+    from dotenv import load_dotenv
+    DOTENV_AVAILABLE = True
+    # Try to load .env file once at module import
+    try:
+        load_dotenv()
+        _logger.info('SMS Gateway: .env file loaded successfully')
+    except Exception as e:
+        _logger.warning(f'SMS Gateway: Could not load .env file: {e}')
+except ImportError:
+    DOTENV_AVAILABLE = False
+    _logger.warning('SMS Gateway: python-dotenv not installed. Using direct environment variables only.')
+
 
 class SmsGatewayConfiguration(models.Model):
     _name = 'sms.gateway.configuration'
@@ -146,14 +160,26 @@ class SmsGatewayConfiguration(models.Model):
                 missing.append(f'{var} ({description})')
         
         if missing:
+            dotenv_msg = ''
+            if DOTENV_AVAILABLE:
+                dotenv_msg = (
+                    "\n\nCreate a .env file in Odoo root with:\n\n"
+                    "AT_USERNAME=sandbox\n"
+                    "AT_API_KEY=your_api_key_here\n"
+                    "AT_SENDER_ID=STRATHMORE\n"
+                    "AT_ENVIRONMENT=sandbox"
+                )
+            else:
+                dotenv_msg = (
+                    "\n\nEither:\n"
+                    "1. Install python-dotenv: pip install python-dotenv\n"
+                    "2. Or set environment variables directly in your system"
+                )
+            
             raise ValidationError(
-                f"Missing required environment variables in .env file:\n\n"
-                f"{chr(10).join(f'  • {var}' for var in missing)}\n\n"
-                f"Please create/update .env file in Odoo root directory with:\n\n"
-                f"AT_USERNAME=sandbox\n"
-                f"AT_API_KEY=your_api_key_here\n"
-                f"AT_SENDER_ID=STRATHMORE\n"
-                f"AT_ENVIRONMENT=sandbox"
+                f"Missing required environment variables:\n\n"
+                f"{chr(10).join(f'  • {var}' for var in missing)}"
+                f"{dotenv_msg}"
             )
         
         return True
@@ -388,35 +414,91 @@ class SmsGatewayConfiguration(models.Model):
             return False, error_msg
     
     def _normalize_phone_number(self, phone_number):
-        """Normalize phone number to E.164 format for Kenya"""
+        """
+        Normalize phone number to E.164 international format
+        
+        Supports:
+        - International with +: +254712345678, +1234567890, +44123456789
+        - International with 00: 00254712345678, 001234567890
+        - Kenya local: 0712345678, 712345678 (defaults to +254)
+        - Any country code length (1-3 digits)
+        
+        Returns: E.164 format (+CountryCodeNumber)
+        """
         if not phone_number:
-            return phone_number
+            raise ValidationError('Phone number cannot be empty')
         
-        phone = phone_number.strip().replace(' ', '').replace('-', '')
+        # Convert to string and remove all formatting
+        phone = str(phone_number).strip()
+        phone = phone.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+        phone = phone.replace('.', '').replace('/', '').replace('\\', '')
         
-        if phone.startswith('+254'):
-            return phone
-        
+        # Already in E.164 format (+CountryNumber)
         if phone.startswith('+'):
-            return phone
+            digits_only = phone[1:]
+            if digits_only.isdigit() and 7 <= len(digits_only) <= 15:
+                return phone
+            else:
+                raise ValidationError(
+                    f'Invalid international number: {phone_number}\n'
+                    f'Expected: +[country code][number] (7-15 digits total)\n'
+                    f'Examples: +254712345678, +1234567890, +44123456789'
+                )
         
-        if phone.startswith('0'):
+        # International format with 00 prefix (00CountryNumber)
+        if phone.startswith('00'):
+            phone = '+' + phone[2:]
+            digits_only = phone[1:]
+            if digits_only.isdigit() and 7 <= len(digits_only) <= 15:
+                return phone
+            else:
+                raise ValidationError(
+                    f'Invalid international number: {phone_number}\n'
+                    f'Format: 00[country code][number] converts to +[country code][number]'
+                )
+        
+        # Only digits remaining - assume Kenya local number
+        if not phone.isdigit():
+            raise ValidationError(
+                f'Invalid phone number: {phone_number}\n'
+                f'Contains non-numeric characters after cleaning.\n'
+                f'Allowed formats:\n'
+                f'  • International: +254712345678 or 00254712345678\n'
+                f'  • Kenya local: 0712345678 or 712345678'
+            )
+        
+        # Kenya: 10 digits starting with 0 (0712345678)
+        if phone.startswith('0') and len(phone) == 10:
             return '+254' + phone[1:]
         
-        if phone.startswith(('7', '1')):
+        # Kenya: 9 digits starting with 7 or 1 (712345678)
+        if phone.startswith(('7', '1')) and len(phone) == 9:
             return '+254' + phone
         
-        return phone
+        # If it's a long number without country code, might be international
+        # Try to intelligently detect country code
+        if 10 <= len(phone) <= 15:
+            # Could be international number without + or 00
+            # Assume it already includes country code
+            return '+' + phone
+        
+        # If we get here, format is unclear
+        raise ValidationError(
+            f'Unable to determine phone number format: {phone_number}\n\n'
+            f'Please use one of these formats:\n'
+            f'  • International: +254712345678 (with country code)\n'
+            f'  • Kenya (10 digits): 0712345678\n'
+            f'  • Kenya (9 digits): 712345678\n'
+            f'  • Other countries: +1234567890, +44123456789, etc.'
+        )
     
     def test_connection(self):
-        """Test gateway connection by sending SMS to test number"""
+        """Test gateway connection by sending SMS to current user's phone"""
         self.ensure_one()
         
-        # Get test number from user profile or use configured number
         user = self.env.user
         test_number = None
         
-        # Try to get phone from user's partner
         if user.partner_id:
             for field_name in ['mobile', 'phone', 'mobile_phone']:
                 try:
@@ -426,21 +508,16 @@ class SmsGatewayConfiguration(models.Model):
                 except AttributeError:
                     continue
         
-        # Fallback to asking user
         if not test_number:
-            # Return a wizard to ask for phone number
-            return {
-                'type': 'ir.actions.act_window',
-                'name': 'Test Gateway',
-                'res_model': 'sms.gateway.test.wizard',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': {'default_gateway_id': self.id}
-            }
+            raise UserError(
+                'No phone number found!\n\n'
+                'Please add your mobile number to your user profile:\n'
+                'Settings → Users → Your User → Mobile/Phone\n\n'
+                'Use international format: +254712345678'
+            )
         
-        # Send test SMS
         test_message = (
-            f"Gateway test successful!\n"
+            f"✅ Gateway test successful!\n"
             f"Gateway: {self.name}\n"
             f"Sent from Odoo SMS Module"
         )
@@ -471,7 +548,7 @@ class SmsGatewayConfiguration(models.Model):
             }
     
     def action_refresh_from_env(self):
-        """Action to refresh gateway configuration from .env file"""
+        """Refresh gateway configuration from environment variables"""
         self.ensure_one()
         
         try:
@@ -490,22 +567,20 @@ class SmsGatewayConfiguration(models.Model):
             
             if update_vals:
                 self.write(update_vals)
-                self.invalidate_recordset()
-                message = f"Gateway updated with .env values:\n{', '.join(update_vals.keys())}"
+                message = f"Gateway updated:\n{', '.join(update_vals.keys())}"
                 notification_type = 'success'
             else:
-                message = "Gateway is already up to date with .env file"
+                message = "Gateway already up to date"
                 notification_type = 'info'
             
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': 'Refresh from .env',
+                    'title': 'Refresh from Environment',
                     'message': message,
                     'type': notification_type,
                     'sticky': False,
-                    'next': {'type': 'ir.actions.act_window_close'},
                 }
             }
         
@@ -515,7 +590,7 @@ class SmsGatewayConfiguration(models.Model):
                 'tag': 'display_notification',
                 'params': {
                     'title': 'Error',
-                    'message': f'Failed to refresh from .env:\n{str(e)}',
+                    'message': f'Failed to refresh:\n{str(e)}',
                     'type': 'danger',
                     'sticky': True,
                 }

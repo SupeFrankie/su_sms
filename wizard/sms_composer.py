@@ -3,8 +3,9 @@ from odoo.exceptions import UserError
 import re
 
 class SmsComposer(models.TransientModel):
-    _name = 'sms.composer'
-    _description = 'SMS Composer'
+    # CHANGED NAME: su_sms.composer (Safe from Odoo conflicts)
+    _name = 'su_sms.composer' 
+    _description = 'Strathmore SMS Composer'
 
     # Template selection
     template_id = fields.Many2one('sms.template', string='Use Template')
@@ -20,6 +21,11 @@ class SmsComposer(models.TransientModel):
     # Validation
     char_count = fields.Integer(string='Characters', compute='_compute_char_count')
     sms_count = fields.Integer(string='SMS Parts', compute='_compute_sms_count')
+
+    composition_mode = fields.Selection([
+        ('comment', 'Comment'),
+        ('mass', 'Mass SMS')
+    ], default='comment', string='Composition Mode')
     
     @api.depends('body')
     def _compute_char_count(self):
@@ -41,7 +47,11 @@ class SmsComposer(models.TransientModel):
         """Load template content"""
         if self.template_id and self.res_id and self.res_model:
             try:
-                self.body = self.template_id.generate_sms(self.res_id)
+                # If not, use standard rendering or just copy body
+                if hasattr(self.template_id, 'generate_sms'):
+                    self.body = self.template_id.generate_sms(self.res_id)
+                else:
+                    self.body = self.template_id.body # Fallback
             except Exception as e:
                 return {
                     'warning': {
@@ -56,23 +66,24 @@ class SmsComposer(models.TransientModel):
         result = super().default_get(fields_list)
         
         # Get context values
-        res_model = self.env.context.get('default_res_model')
-        res_id = self.env.context.get('default_res_id')
+        res_model = self.env.context.get('default_res_model') or self.env.context.get('active_model')
+        res_id = self.env.context.get('default_res_id') or self.env.context.get('active_id')
         
         result['res_model'] = res_model
         result['res_id'] = res_id
         
         # Try to get phone from record
         if res_model and res_id:
-            record = self.env[res_model].browse(res_id)
-            # Try different phone field names
-            phone_fields = ['mobile', 'phone', 'mobile_phone']
-            for field in phone_fields:
-                if hasattr(record, field):
-                    phone = getattr(record, field)
-                    if phone:
-                        result['recipient_phone'] = phone
+            try:
+                record = self.env[res_model].browse(res_id)
+                # Try different phone field names
+                phone_fields = ['mobile', 'phone', 'mobile_phone', 'work_phone']
+                for field in phone_fields:
+                    if hasattr(record, field) and record[field]:
+                        result['recipient_phone'] = record[field]
                         break
+            except Exception:
+                pass # Ignore if record lookup fails
         
         return result
     

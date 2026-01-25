@@ -15,7 +15,7 @@ class ResUsers(models.Model):
         ('faculty_admin', 'Faculty Administrator'),
         ('administrator', 'Administrator'),
         ('system_admin', 'System Administrator'),
-    ], string='SMS Role', compute='_compute_sms_role', store=True)
+    ], string='SMS Role', default='basic')
     
     @api.depends('groups_id')
     def _compute_sms_role(self):
