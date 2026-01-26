@@ -23,6 +23,7 @@ class SMSDepartment(models.Model):
                                store=True)
     message_count = fields.Integer(string='Messages Sent', compute='_compute_message_count')
     
+
     @api.constrains('short_name')
     def _check_unique_short_name(self):
         for record in self:

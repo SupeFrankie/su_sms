@@ -1,4 +1,4 @@
-# ICT Operations SMS Module
+# SU SMS Module
 
 ![Odoo Version](https://img.shields.io/badge/Odoo-17.0%2B-purple?style=for-the-badge&logo=odoo)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python)
@@ -31,7 +31,7 @@ A localized SMS Gateway integration for Strathmore University ICT Operations, po
 
 ## Overview
 
-The **ICT Operations SMS Module** replaces Odoo’s default SMS IAP provider with a direct integration to **Africa’s Talking**, enabling reliable, cost-effective SMS delivery for internal university communication.
+The **SMS Module** replaces Odoo’s default SMS IAP provider with a direct integration to **Africa’s Talking**, enabling reliable, cost-effective SMS delivery for internal university communication.
 
 The module is designed specifically for institutional environments where:
 
@@ -136,7 +136,7 @@ Installation Steps
 
     Navigate to Apps, click Update Apps List, then search for:
 
-    ICT Operations SMS Module
+    SU SMS Module
 
     Install the module.
 

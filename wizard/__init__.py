@@ -1,3 +1,4 @@
-from . import su_sms_composer
-from . import import_recipients_wizard
+# wizard/__init__.py
+
+from . import sms_import_wizard
 from . import sms_compose_wizard

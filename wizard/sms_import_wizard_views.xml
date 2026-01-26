@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sms_import_wizard_form" model="ir.ui.view">
+        <field name="name">sms.import.wizard.form</field>
+        <field name="model">sms.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Recipients">
+                <group>
+                    <field name="import_file" widget="binary" height="64"/>
+                    <field name="file_name" invisible="1"/>
+                </group>
+                
+                <div class="alert alert-danger" role="alert" invisible="not has_error">
+                    <field name="error_message" readonly="1" nolabel="1"/>
+                </div>
+
+                <div class="alert alert-info" role="alert" invisible="not import_file or has_error">
+                    <strong>Preview (First 10 Rows):</strong>
+                    <field name="preview_data" readonly="1" nolabel="1"/>
+                </div>
+
+                <footer>
+                    <button string="Download Template" name="action_download_template" type="object" class="btn-secondary"/>
+                    <button string="Import" name="action_import" type="object" class="btn-primary" invisible="not import_file or has_error"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sms_import_wizard" model="ir.actions.act_window">
+        <field name="name">Import Recipients</field>
+        <field name="res_model">sms.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

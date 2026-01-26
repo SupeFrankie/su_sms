@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ICT Operations SMS Module
+SU SMS Module
 ==========================
 
 This module provides comprehensive SMS management for university operations.

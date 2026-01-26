@@ -1,4 +1,4 @@
-# models/sms_administrator.py (accounts for who can send sms from where to where)
+# models/sms_administrator.py
 
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
@@ -22,7 +22,7 @@ class SMSAdministrator(models.Model):
     
     name = fields.Char(related='user_id.name', string='Name', store=True, readonly=True)
     email = fields.Char(related='user_id.email', string='Email', readonly=True)
-    
+        
     @api.constrains('user_id')
     def _check_unique_user(self):
         for record in self:

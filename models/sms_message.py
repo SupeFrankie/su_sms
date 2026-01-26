@@ -46,6 +46,7 @@ class SMSMessage(models.Model):
     
     gateway_id = fields.Many2one('sms.gateway.configuration', string='Gateway')
     
+    
     @api.model
     def _get_current_admin(self):
         return self.env['sms.administrator'].search([

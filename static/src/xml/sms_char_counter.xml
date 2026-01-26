@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="su_sms.SMSCharCounter" t-inherit="web.TextField" t-inherit-mode="primary">
+        <xpath expr="//textarea" position="after">
+            <div class="text-muted mt-1 text-end" style="font-size: 0.85em;">
+                <span t-attf-class="{{state.count > 160 ? 'text-warning' : 'text-success'}}">
+                    <t t-esc="state.count"/> characters
+                </span> 
+                | 
+                <strong><t t-esc="state.parts"/> SMS part(s)</strong>
+            </div>
+        </xpath>
+    </t>
+</templates>

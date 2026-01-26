@@ -4,7 +4,7 @@
         
         <!-- Main SMS System Menu -->
         <menuitem id="menu_sms_marketing_root"
-                  name="SMS System"
+                  name=" SU SMS System"
                   web_icon="su_sms,static/description/icon.png"
                   sequence="5"/>
 

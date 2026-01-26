@@ -1,14 +1,4 @@
 """
-Models Package
-==============
-
-Contains all database models for SU SMS module.
-
-Order of import matters because of dependencies:
-1. Base models first (contacts, blacklist)
-2. Then models that reference them (mailing list)
-3. Finally messages and templates
-
 Models Package - Import Order Matters!
 """
 
@@ -16,6 +6,7 @@ Models Package - Import Order Matters!
 from . import sms_type
 from . import sms_blacklist
 from . import sms_gateway_config
+from . import sms_dashboard  # NEW: Added Dashboard Model
 
 # Models with basic dependencies
 from . import hr_department
@@ -25,7 +16,7 @@ from . import res_users
 # Contact and related models
 from . import sms_contact
 
-# Templates
+# Templates - MAKE SURE THIS IS HERE
 from . import sms_template
 
 # Mailing lists (depends on contacts)
@@ -47,11 +38,11 @@ from . import sms_detail
 from . import sms_staff_filter
 from . import sms_student_filter
 
-# Expenditure reporting
+# Expenditure reporting - LOAD LAST
 from . import sms_department_expenditure
 
-# Incoming SMS reporting
+# Incoming SMS
 from . import sms_incoming
 
-# webservice
+# Web service
 from . import mock_webservice

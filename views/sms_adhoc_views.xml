@@ -1,90 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Ad Hoc SMS Campaign Form View -->
         <record id="view_sms_adhoc_form" model="ir.ui.view">
             <field name="name">sms.campaign.adhoc.form</field>
             <field name="model">sms.campaign</field>
             <field name="arch" type="xml">
-                <form string="Ad Hoc SMS Campaign">
+                <form string="Ad Hoc SMS">
                     <header>
-                        <button name="action_prepare_recipients" string="Load CSV" 
-                                type="object" class="oe_highlight" 
+                        <button name="action_open_import_wizard" string="Upload CSV" 
+                                type="object" class="oe_highlight" icon="fa-upload"
                                 invisible="status != 'draft'"/>
-                        <button name="action_send" string="Send Now" 
-                                type="object" class="oe_highlight" 
-                                invisible="status != 'draft' or total_recipients == 0"/>
-                        <field name="status" widget="statusbar" 
-                               statusbar_visible="draft,in_progress,completed"/>
+                                
+                        <button name="action_send" string="Send Now" type="object" class="oe_highlight" invisible="status != 'draft'"/>
+                        <field name="status" widget="statusbar"/>
                     </header>
                     <sheet>
-                        <div class="oe_button_box" name="button_box">
-                            <button class="oe_stat_button" icon="fa-users" type="object">
-                                <div class="o_field_widget o_stat_info">
-                                    <span class="o_stat_value"><field name="total_recipients"/></span>
-                                    <span class="o_stat_text">Recipients</span>
-                                </div>
-                            </button>
-                            <button class="oe_stat_button" icon="fa-check-circle" type="object">
-                                <div class="o_field_widget o_stat_info">
-                                    <span class="o_stat_value text-success"><field name="sent_count"/></span>
-                                    <span class="o_stat_text">Sent</span>
-                                </div>
-                            </button>
-                        </div>
-                        
                         <div class="oe_title">
-                            <h1><field name="name" placeholder="Campaign Name" default_focus="1"/></h1>
+                            <h1><field name="name" placeholder="Campaign Name"/></h1>
                         </div>
-                        
                         <group>
                             <group>
-                                <field name="sms_type_id" invisible="1"/>
-                                <field name="target_type" invisible="1"/>
-                                <field name="gateway_id" options="{'no_create': True}"/>
+                                <field name="sms_type_id" readonly="1"/>
+                                <field name="administrator_id" invisible="1"/>
                             </group>
                             <group>
-                                <field name="administrator_id" readonly="1"/>
-                                <field name="personalized"/>
+                                <field name="schedule_date" widget="datetime"/>
+                                <field name="gateway_id" groups="su_sms.group_sms_system_admin"/>
                             </group>
                         </group>
-                        
-                        <group string="Upload CSV File">
-                            <field name="import_file" filename="import_filename"/>
-                            <field name="import_filename" invisible="1"/>
-                            <div class="alert alert-info" role="alert">
-                                <p><strong>CSV Format Required:</strong></p>
-                                <ul>
-                                    <li>Columns: name, number</li>
-                                    <li>Example: John Doe,+254712345678</li>
-                                </ul>
-                            </div>
-                        </group>
-                        
                         <notebook>
                             <page string="Message">
-                                <group>
-                                    <field name="message" widget="text" 
-                                           placeholder="Enter your SMS message..." nolabel="1"/>
-                                </group>
-                                <group>
-                                    <group>
-                                        <label for="message_length"/>
-                                        <div>
-                                            <field name="message_length" readonly="1" class="oe_inline"/> characters
-                                        </div>
-                                    </group>
-                                </group>
+                                <field name="message" widget="sms_counter"/>
                             </page>
                             <page string="Recipients">
-                                <field name="recipient_ids">
-                                    <list decoration-success="status=='sent'" 
-                                          decoration-danger="status=='failed'">
+                                <field name="recipient_ids" readonly="1">
+                                    <list>
                                         <field name="name"/>
                                         <field name="phone_number"/>
                                         <field name="status"/>
-                                        <field name="sent_date"/>
-                                        <field name="error_message"/>
                                     </list>
                                 </field>
                             </page>
@@ -94,12 +47,10 @@
             </field>
         </record>
 
-        <!-- Ad Hoc SMS Action -->
         <record id="action_sms_adhoc" model="ir.actions.act_window">
             <field name="name">Ad Hoc SMS</field>
             <field name="res_model">sms.campaign</field>
-            <field name="view_mode">form,list</field>
-            <field name="view_id" ref="view_sms_adhoc_form"/>
+            <field name="view_mode">list,form</field>
             <field name="target">current</field>
             <field name="context" eval="{
                     'default_sms_type_id': ref('sms_type_adhoc'),

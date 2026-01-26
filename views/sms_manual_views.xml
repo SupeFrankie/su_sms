@@ -1,87 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Manual SMS Campaign Form View -->
         <record id="view_sms_manual_form" model="ir.ui.view">
             <field name="name">sms.campaign.manual.form</field>
             <field name="model">sms.campaign</field>
             <field name="arch" type="xml">
-                <form string="Manual SMS Campaign">
+                <form string="Manual SMS">
                     <header>
-                        <button name="action_prepare_recipients" string="Prepare" 
-                                type="object" class="oe_highlight" 
-                                invisible="status != 'draft'"/>
-                        <button name="action_send" string="Send Now" 
-                                type="object" class="oe_highlight" 
-                                invisible="status != 'draft' or total_recipients == 0"/>
-                        <field name="status" widget="statusbar" 
-                               statusbar_visible="draft,in_progress,completed"/>
+                        <button name="action_prepare_recipients" string="Process Numbers" type="object" class="oe_highlight" invisible="status != 'draft'"/>
+                        <button name="action_send" string="Send Now" type="object" class="oe_highlight" invisible="status != 'draft'"/>
+                        <field name="status" widget="statusbar"/>
                     </header>
                     <sheet>
-                        <div class="oe_button_box" name="button_box">
-                            <button class="oe_stat_button" icon="fa-users" type="object">
-                                <div class="o_field_widget o_stat_info">
-                                    <span class="o_stat_value"><field name="total_recipients"/></span>
-                                    <span class="o_stat_text">Recipients</span>
-                                </div>
-                            </button>
-                            <button class="oe_stat_button" icon="fa-check-circle" type="object">
-                                <div class="o_field_widget o_stat_info">
-                                    <span class="o_stat_value text-success"><field name="sent_count"/></span>
-                                    <span class="o_stat_text">Sent</span>
-                                </div>
-                            </button>
-                        </div>
-                        
                         <div class="oe_title">
-                            <h1><field name="name" placeholder="Campaign Name" default_focus="1"/></h1>
+                            <label for="name" class="oe_edit_only"/>
+                            <h1><field name="name" placeholder="Campaign Name"/></h1>
                         </div>
-                        
                         <group>
                             <group>
-                                <field name="sms_type_id" invisible="1"/>
-                                <field name="target_type" invisible="1"/>
-                                <field name="gateway_id" options="{'no_create': True}"/>
+                                <field name="sms_type_id" readonly="1"/>
+                                <field name="administrator_id" invisible="1"/>
                             </group>
                             <group>
-                                <field name="administrator_id" readonly="1"/>
+                                <field name="schedule_date" widget="datetime"/>
+                                <field name="gateway_id" groups="su_sms.group_sms_system_admin"/>
                             </group>
                         </group>
-                        
-                        <group string="Enter Phone Numbers">
-                            <field name="manual_numbers" widget="text" 
-                                   placeholder="Enter comma-separated phone numbers:&#10;+254712345678, +254723456789, +254734567890" 
-                                   nolabel="1"/>
-                            <div class="alert alert-info" role="alert">
-                                <p><strong>Format:</strong> Separate numbers with commas. Include country code (+254 for Kenya)</p>
-                                <p><strong>Example:</strong> +254712345678, +254723456789</p>
-                            </div>
-                        </group>
-                        
                         <notebook>
-                            <page string="Message">
+                            <page string="Compose">
                                 <group>
-                                    <field name="message" widget="text" 
-                                           placeholder="Enter your SMS message..." nolabel="1"/>
-                                </group>
-                                <group>
-                                    <group>
-                                        <label for="message_length"/>
-                                        <div>
-                                            <field name="message_length" readonly="1" class="oe_inline"/> characters
-                                        </div>
-                                    </group>
+                                    <field name="manual_phone_numbers" placeholder="+254700000000, +254711111111"/>
+                                    <field name="message" widget="sms_counter"/>
                                 </group>
                             </page>
-                            <page string="Recipients">
-                                <field name="recipient_ids">
-                                    <list decoration-success="status=='sent'" 
-                                          decoration-danger="status=='failed'">
-                                        <field name="name"/>
+                            <page string="Recipients Status">
+                                <field name="recipient_ids" readonly="1">
+                                    <list>
                                         <field name="phone_number"/>
                                         <field name="status"/>
-                                        <field name="sent_date"/>
-                                        <field name="error_message"/>
                                     </list>
                                 </field>
                             </page>
@@ -91,12 +47,10 @@
             </field>
         </record>
 
-        <!-- Manual SMS Action -->
         <record id="action_sms_manual" model="ir.actions.act_window">
             <field name="name">Manual SMS</field>
             <field name="res_model">sms.campaign</field>
-            <field name="view_mode">form,list</field>
-            <field name="view_id" ref="view_sms_manual_form"/>
+            <field name="view_mode">list,form</field>
             <field name="target">current</field>
             <field name="context" eval="{
                 'default_sms_type_id': ref('sms_type_manual'),

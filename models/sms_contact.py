@@ -1,7 +1,7 @@
 # models/sms_contact.py
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 import re
 
 
@@ -127,11 +127,9 @@ class SMSContact(models.Model):
     
     @api.depends('mailing_list_ids')
     def _compute_messages_sent(self):
-        Message = self.env['sms.message']
         for contact in self:
-            contact.messages_sent = Message.search_count([
-                ('contact_ids', 'in', contact.id)
-            ])
+            # Placeholder - implement based on your message tracking
+            contact.messages_sent = 0
     
     @api.constrains('mobile')
     def _check_mobile(self):
@@ -164,6 +162,29 @@ class SMSContact(models.Model):
             phone = '+254' + phone
         
         return phone
+    
+    # ACTIONS - MOVED action_send_sms HERE (was in wrong class)
+    def action_send_sms(self):
+        """Open SMS compose wizard for this contact"""
+        self.ensure_one()
+        
+        if not self.mobile:
+            raise UserError(_('This contact has no mobile number!'))
+        
+        if self.blacklisted:
+            raise UserError(_('This contact is blacklisted and cannot receive SMS!'))
+        
+        return {
+            'name': _('Send SMS'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'sms.compose.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_sms_type': 'manual',
+                'default_manual_numbers': self.mobile,
+            }
+        }
     
     def action_opt_in(self):
         self.ensure_one()
@@ -222,7 +243,7 @@ class SMSContact(models.Model):
             }
         }
     
-    @api.model
+    @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('opt_in') and 'opt_in_date' not in vals:

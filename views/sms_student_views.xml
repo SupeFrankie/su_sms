@@ -44,7 +44,7 @@
                             <field name="message" widget="text" placeholder="Enter your message here..." nolabel="1"/>
                         </group>
                         
-                        <div class="alert alert-info mt-3" role="alert">
+                        <div class="alert alert-info" role="alert">
                             <p><strong>SMS Pricing:</strong> 1 SMS = 160 characters | Each additional 153 characters = +1 SMS</p>
                         </div>
                     </sheet>
@@ -58,7 +58,6 @@
             </field>
         </record>
 
-        <!-- Student SMS Action -->
         <record id="action_sms_student" model="ir.actions.act_window">
             <field name="name">Student SMS</field>
             <field name="res_model">sms.student.filter</field>

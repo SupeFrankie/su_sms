@@ -1,108 +1,73 @@
+# __manifest__.py
+
 {
     'name': 'Strathmore University - SMS Module',
-    'version': '1.0.0',
+    'version': '1.0.1',
     'category': 'Marketing/SMS',
-    'summary': 'SMS Campaigns with Africa\'s Talking API for Mass University Communication',
-    'description': """
-        Strathmore University SMS Communication & Management System
-        ================================================
-        
-        Features:
-        * Send bulk SMS to students, staff, clubs, departments and parents
-        * Africa's Talking API integration
-        * Import recipients from CSV/DOC/DOCX
-        * Personalized messages with name, admission number, staff ID
-        * Opt-in/Opt-out management
-        * Blacklist functionality
-        * Department-based campaigns
-        
-        SMS Modules:
-        - Staff SMS: Send to staff by department, gender, category
-        - Students SMS: Advanced filtering by school, program, course, year
-        - Ad Hoc SMS: Upload CSV contacts
-        - Manual SMS: Direct phone number entry
-        
-        User Roles:
-        - System Administrator: Full access + configuration
-        - Administrator: Staff and Students SMS
-        - Faculty Administrator: Students SMS only
-        - Department Administrator: Staff SMS for their department
-        - Basic User: Ad Hoc and Manual SMS only
-        
-        Technical Features:
-        - Africa's Talking API integration
-        - Department-based billing (KFS5 ready)
-        - CSV/DOCX import for bulk contacts
-        - Personalized messaging
-        - Opt-in/Opt-out web pages
-        - Blacklist management
-        - Comprehensive reporting
-        - Financial tracking per department
-        
-        Based on Strathmore University legacy PHP system.
-    """,
+    'summary': 'SMS Campaigns with Live Counters & CSV Wizards',
     'author': 'Francis Martine Nyabuto Agata',
     'website': 'https://github.com/SupeFrankie',
     'license': 'LGPL-3',
-    'depends': ['base', 
-                'mail', 
-                'contacts', 
-                'web', 
-                'hr',
-                ],
+    'depends': ['base', 'mail', 'contacts', 'web', 'hr'],
     'data': [
-        # Security FIRST
+        # =========================================================
+        # 1. SECURITY (Load First)
+        # =========================================================
         'security/security_groups.xml',
         'security/ir.model.access.csv',
         
-        # Base data (dependencies for other files)
+        # =========================================================
+        # 2. DATA (Base Configuration)
+        # =========================================================
         'data/sms_type_data.xml',
         'data/gateway_data.xml',
+        'data/sms_template_data.xml',
         
-        # --- LOAD WIZARDS EARLY (Dependencies for Views) ---
-        'wizard/sms_composer_views.xml', 
+        # =========================================================
+        # 3. WIZARDS (Load before Views that reference them)
+        # =========================================================
+        'wizard/sms_compose_wizard_views.xml',
+        'wizard/sms_import_wizard_views.xml',  # New CSV Import Wizard
         
-        # --- LOAD VIEW FILES (DEFINING ACTIONS) ---
+        # =========================================================
+        # 4. VIEWS (Standard Views)
+        # =========================================================
         'views/sms_gateway_views.xml',
         'views/sms_contact_views.xml',
         'views/sms_blacklist_views.xml',
         'views/sms_template_views.xml',
         'views/sms_mailing_list_views.xml',
-        
-        # Campaign views
-        'views/sms_campaign_views.xml',
         'views/sms_recipient_views.xml',
+        'views/sms_dashboard_views.xml', # New Dashboard View
         
-        # Module-specific views
+        # =========================================================
+        # 5. CAMPAIGN & MODULE SPECIFIC VIEWS
+        # =========================================================
+        'views/sms_campaign_views.xml',
         'views/sms_adhoc_views.xml',
         'views/sms_manual_views.xml',
         'views/sms_staff_views.xml',
         'views/sms_student_views.xml',
         
-        # Extended views
+        # =========================================================
+        # 6. INHERITED VIEWS & MENUS (Load Last)
+        # =========================================================
         'views/hr_department_views.xml',
         'views/res_users_views.xml',
         'views/sms_department_expenditure_views.xml',
+        'views/sms_administrator_views.xml',
         
-        # --- LOAD MENUS LAST ---
-        'views/menu_views.xml',
-        
-        # Other Wizards
-        'wizard/import_recipients_wizard.xml',
-        
-        # Templates and other data 
-        'data/sms_template_data.xml',
-        'views/opt_out_templates.xml'
+        'views/menu_views.xml', # Menus must be last to find all actions
     ],
-    
-    'external_dependencies': {
-        'python': ['dotenv'],
+    'assets': {
+        'web.assets_backend': [
+            # Live Character Counter
+            'su_sms/static/src/xml/sms_live_widget.xml',
+            'su_sms/static/src/js/sms_live_widget.js',
+            
+            # Header Balance Display
+            'su_sms/static/src/xml/sms_systray_balance.xml',
+            'su_sms/static/src/js/sms_systray_balance.js',
+        ],
     },
-    
-    'demo': [
-        'data/demo_data.xml',
-    ],
-    'installable': True,
-    'application': True,
-    'auto_install': False,
 }

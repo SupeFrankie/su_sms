@@ -1,76 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <record id="view_sms_recipient_list" model="ir.ui.view">
-            <field name="name">sms.recipient.list</field>
-            <field name="model">sms.recipient</field>
+        <!-- Staff SMS Filter Form View -->
+        <record id="view_sms_staff_filter_form" model="ir.ui.view">
+            <field name="name">sms.staff.filter.form</field>
+            <field name="model">sms.staff.filter</field>
             <field name="arch" type="xml">
-                <list string="SMS Recipients" decoration-success="status=='sent'" decoration-danger="status=='failed'" decoration-muted="status=='pending'">
-                    <field name="campaign_id"/>
-                    <field name="name"/>
-                    <field name="phone_number"/>
-                    <field name="status"/>
-                    <field name="sent_date"/>
-                    <field name="error_message"/>
-                </list>
-            </field>
-        </record>
-
-        <record id="view_sms_recipient_form" model="ir.ui.view">
-            <field name="name">sms.recipient.form</field>
-            <field name="model">sms.recipient</field>
-            <field name="arch" type="xml">
-                <form string="SMS Recipient">
-                    <header>
-                        <field name="status" widget="statusbar" statusbar_visible="pending,sent,failed"/>
-                    </header>
+                <form string="Staff SMS">
                     <sheet>
+                        <div class="oe_title">
+                            <h1>Send SMS to Staff</h1>
+                        </div>
+                        
                         <group>
-                            <group>
-                                <field name="campaign_id" readonly="1"/>
-                                <field name="name"/>
-                                <field name="phone_number"/>
+                            <group string="Filters">
+                                <field name="administrator_id" readonly="1"/>
+                                <field name="department_id" options="{'no_create': True}"/>
+                                <field name="gender"/>
+                                <field name="category"/>
+                                <field name="job_status_type"/>
                             </group>
-                            <group>
-                                <field name="status"/>
-                                <field name="sent_date" readonly="1"/>
-                                <field name="error_message" readonly="1" invisible="status != 'failed'"/>
+                            <group string="Message Statistics">
+                                <field name="char_count" readonly="1"/>
+                                <field name="sms_count" readonly="1"/>
                             </group>
                         </group>
+                        
+                        <group string="Message">
+                            <field name="message" widget="text" placeholder="Enter your message here..." nolabel="1"/>
+                        </group>
+                        
+                        <div class="alert alert-info" role="alert">
+                            <p><strong>SMS Pricing:</strong> 1 SMS = 160 characters | Each additional 153 characters = +1 SMS</p>
+                        </div>
                     </sheet>
+                    
+                    <footer>
+                        <button name="action_view_recipients" string="Preview Recipients" type="object" class="btn-secondary"/>
+                        <button name="action_send_sms" string="Send SMS" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
                 </form>
             </field>
         </record>
 
-        <record id="view_sms_recipient_search" model="ir.ui.view">
-            <field name="name">sms.recipient.search</field>
-            <field name="model">sms.recipient</field>
-            <field name="arch" type="xml">
-                <search string="Search Recipients">
-                    <field name="name"/>
-                    <field name="phone_number"/>
-                    <field name="campaign_id"/>
-                    <filter string="Pending" name="pending" domain="[('status', '=', 'pending')]"/>
-                    <filter string="Sent" name="sent" domain="[('status', '=', 'sent')]"/>
-                    <filter string="Failed" name="failed" domain="[('status', '=', 'failed')]"/>
-                    <filter string="Sent Date" name="sent_date" date="sent_date"/>
-                    <group>
-                        <filter string="Campaign" name="group_campaign" context="{'group_by': 'campaign_id'}"/>
-                        <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
-                        <filter string="Sent Date" name="group_sent_date" context="{'group_by': 'sent_date'}"/>
-                    </group>
-                </search>
-            </field>
-        </record>
-
-        <record id="action_sms_recipient" model="ir.actions.act_window">
-            <field name="name">SMS Recipients</field>
-            <field name="res_model">sms.recipient</field>
-            <field name="view_mode">list,form</field>
-            <field name="help" type="html">
-                <p class="o_view_nocontent_smiling_face">No recipients found</p>
-                <p>Recipients are added through campaigns.</p>
-            </field>
+        <!-- Action to Open Staff SMS Filter Form -->
+        <record id="action_sms_staff" model="ir.actions.act_window">
+            <field name="name">Staff SMS</field>
+            <field name="res_model">sms.staff.filter</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{}</field>
         </record>
     </data>
 </odoo>

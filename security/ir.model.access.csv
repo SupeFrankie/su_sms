@@ -37,11 +37,11 @@ access_student_module_manager,student.module.manager,model_student_module,group_
 access_student_intake_all,student.intake.all,model_student_intake,base.group_user,1,0,0,0
 access_student_intake_manager,student.intake.manager,model_student_intake,group_sms_system_admin,1,1,1,1
 access_sms_department_expenditure_manager,sms.department.expenditure.manager,model_sms_department_expenditure,group_sms_system_admin,1,0,0,0
-access_import_recipients_all,import.recipients.all,model_import_sms_recipients,base.group_user,1,1,1,1
-access_sms_composer_all,sms.composer.all,model_sms_composer,base.group_user,1,1,1,1
 access_sms_department_all,sms.department.all,model_sms_department,base.group_user,1,0,0,0
 access_sms_department_manager,sms.department.manager,model_sms_department,group_sms_system_admin,1,1,1,1
 access_sms_administrator_all,sms.administrator.all,model_sms_administrator,base.group_user,1,0,0,0
 access_sms_administrator_manager,sms.administrator.manager,model_sms_administrator,group_sms_system_admin,1,1,1,1
 access_sms_compose_wizard,access_sms_compose_wizard,model_sms_compose_wizard,base.group_user,1,1,1,1
 access_sms_incoming_message,sms.incoming.message,model_sms_incoming_message,base.group_user,1,1,1,1
+access_sms_import_wizard_user,sms.import.wizard.user,model_sms_import_wizard,base.group_user,1,1,1,1
+access_sms_dashboard_user,sms.dashboard.user,model_sms_dashboard,base.group_user,1,0,0,0

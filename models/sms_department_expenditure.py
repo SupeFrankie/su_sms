@@ -39,7 +39,7 @@ class DepartmentExpenditure(models.Model):
         readonly=True
     )
     
-    sms_id = fields.Many2one(
+    campaign_id = fields.Many2one(
         'sms.campaign',
         string='SMS Campaign',
         readonly=True
@@ -55,6 +55,7 @@ class DepartmentExpenditure(models.Model):
         readonly=True
     )
     
+    # ADD THESE TWO FIELDS:
     kfs5_processed = fields.Boolean(
         string='KFS5 Processed',
         readonly=True
@@ -74,6 +75,8 @@ class DepartmentExpenditure(models.Model):
     def init(self):
         """Create database view for department expenditure reporting"""
         tools.drop_view_if_exists(self.env.cr, self._table)
+        
+        # UPDATED SQL - Now includes kfs5_processed fields
         self.env.cr.execute("""
             CREATE OR REPLACE VIEW %s AS (
                 SELECT
@@ -84,13 +87,13 @@ class DepartmentExpenditure(models.Model):
                     d.chart_code,
                     d.account_number,
                     d.object_code,
-                    sc.id AS sms_id,
+                    sc.id AS campaign_id,
                     LPAD(EXTRACT(MONTH FROM sc.create_date)::text, 2, '0') AS month_sent,
                     EXTRACT(YEAR FROM sc.create_date)::text AS year_sent,
                     sc.kfs5_processed,
                     sc.kfs5_processed_date,
                     (
-                        SELECT ROUND(SUM(sr.cost)::numeric, 2)
+                        SELECT ROUND(COALESCE(SUM(sr.cost), 0)::numeric, 2)
                         FROM sms_recipient sr
                         WHERE sc.id = sr.campaign_id
                     ) AS credit_spent
