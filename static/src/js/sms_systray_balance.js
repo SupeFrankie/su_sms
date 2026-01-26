@@ -5,8 +5,10 @@ import { useService } from "@web/core/utils/hooks";
 import { Component, useState, onWillStart } from "@odoo/owl";
 
 export class SMSBalanceSystray extends Component {
+    static template = "su_sms.SMSBalanceSystray";
+    
     setup() {
-        this.rpc = useService("rpc");
+        this.orm = useService("orm");  // FIX: Changed from "rpc" to "orm"
         this.state = useState({ balance: "..." });
 
         onWillStart(async () => {
@@ -16,21 +18,19 @@ export class SMSBalanceSystray extends Component {
 
     async fetchBalance() {
         try {
-            // Calls a python method to get balance from API
-            const result = await this.rpc("/web/dataset/call_kw/sms.gateway.configuration/get_api_balance", {
-                model: "sms.gateway.configuration",
-                method: "get_api_balance",
-                args: [],
-                kwargs: {},
-            });
-            this.state.balance = result;
+            // FIX: Updated to Odoo 19 ORM syntax
+            const result = await this.orm.call(
+                "sms.gateway.configuration",
+                "get_api_balance",
+                []
+            );
+            this.state.balance = result || "0.00";
         } catch (e) {
-            this.state.balance = "Err";
+            console.error("Failed to fetch SMS balance:", e);
+            this.state.balance = "N/A";
         }
     }
 }
-
-SMSBalanceSystray.template = "su_sms.SMSBalanceSystray";
 
 export const systrayItem = {
     Component: SMSBalanceSystray,

@@ -20,7 +20,7 @@
                                         string="Import Contacts via CSV" 
                                         type="action" 
                                         class="btn-primary mb-2"
-                                        context="{'default_mailing_list_id': active_id}"/>
+                                        context="{'default_mailing_list_id': id}"/>
                                         
                                 <field name="contact_ids">
                                     <list>

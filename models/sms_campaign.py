@@ -1,6 +1,4 @@
-# models/sms_campaign.py
-
-from odoo import models, fields, api, exceptions, _
+from odoo import models, fields, api, _
 import logging
 import math
 
@@ -12,7 +10,7 @@ class SMSCampaign(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'create_date desc'
     
-    name = fields.Char('Campaign Title', required=True, tracking=True, placeholder="e.g. End of Semester Reminder")
+    name = fields.Char('Campaign Title', required=True, tracking=True)
     
     status = fields.Selection([
         ('draft', 'Draft'),
@@ -27,22 +25,18 @@ class SMSCampaign(models.Model):
     
     message = fields.Text('Message Content', required=True)
     
-    # --- Manual & Counters ---
     manual_phone_numbers = fields.Text(string="Manual Phone Numbers", help="Enter numbers separated by commas")
-    # Alias for compatibility with views
     manual_numbers = fields.Text(string="Manual Numbers (Alias)", related='manual_phone_numbers', readonly=False)
 
     char_count = fields.Integer(string="Character Count", compute='_compute_message_stats', store=True)
-    sms_count = fields.Integer(string="SMS Count", compute='_compute_message_stats', store=True)
+    sms_count = fields.Integer(string="SMS Parts", compute='_compute_message_stats', store=True)
     
-    # Compatibility Aliases
-    message_length = fields.Integer(related='char_count')
-    sms_parts = fields.Integer(related='sms_count')
+    message_length = fields.Integer(string='Message Length (chars)', compute='_compute_message_stats')
+    sms_parts = fields.Integer(string='Number of SMS', related='sms_count')
 
     personalized = fields.Boolean('Use Personalization')
     send_immediately = fields.Boolean('Send Immediately', default=True)
     
-    # --- KFS/Finance ---
     kfs5_processed = fields.Boolean('KFS5 Processed', default=False, tracking=True)
     kfs5_processed_date = fields.Datetime('KFS5 Processed Date', readonly=True)
     
@@ -55,26 +49,23 @@ class SMSCampaign(models.Model):
         ('manual', 'Manual'),
     ], string='Target Audience', required=True)
     
-    # --- Relations ---
     administrator_id = fields.Many2one('sms.administrator', string='Administrator', 
         default=lambda self: self._default_administrator())
     
     department_id = fields.Many2one('hr.department', string='Department')
     mailing_list_id = fields.Many2one('sms.mailing.list', string='Mailing List')
     
-    # Gateway (Will be hidden in view for non-admins)
     gateway_id = fields.Many2one('sms.gateway.configuration', string='Gateway', 
         default=lambda self: self._default_gateway())
     
     schedule_date = fields.Datetime('Schedule Date', tracking=True)
     
-    # --- Statistics ---
-    total_recipients = fields.Integer(compute='_compute_statistics')
-    sent_count = fields.Integer(compute='_compute_statistics')
-    failed_count = fields.Integer(compute='_compute_statistics')
-    pending_count = fields.Integer(compute='_compute_statistics')
-    total_cost = fields.Float(compute='_compute_statistics', string='Total Cost')
-    success_rate = fields.Float(compute='_compute_statistics', string='Success Rate')
+    total_recipients = fields.Integer(compute='_compute_statistics', store=True)
+    sent_count = fields.Integer(compute='_compute_statistics', store=True)
+    failed_count = fields.Integer(compute='_compute_statistics', store=True)
+    pending_count = fields.Integer(compute='_compute_statistics', store=True)
+    total_cost = fields.Float(compute='_compute_statistics', string='Total Cost', store=True)
+    success_rate = fields.Float(compute='_compute_statistics', string='Success Rate (%)', store=True)
     
     recipient_ids = fields.One2many('sms.recipient', 'campaign_id', string='Recipients')
 
@@ -87,6 +78,7 @@ class SMSCampaign(models.Model):
                 parts = math.ceil(length / 153)
             record.char_count = length
             record.sms_count = parts
+            record.message_length = length
 
     @api.depends('recipient_ids', 'recipient_ids.status')
     def _compute_statistics(self):
@@ -106,9 +98,7 @@ class SMSCampaign(models.Model):
     def _default_gateway(self):
         return self.env['sms.gateway.configuration'].search([('is_default', '=', True)], limit=1)
 
-    # --- Actions ---
     def action_open_import_wizard(self):
-        """Opens the new CSV Import Wizard"""
         return {
             'name': _('Import Recipients'),
             'type': 'ir.actions.act_window',
@@ -119,7 +109,6 @@ class SMSCampaign(models.Model):
         }
 
     def action_prepare_recipients(self):
-        # Legacy stub for manual numbers
         self.ensure_one()
         if self.target_type == 'manual' and self.manual_phone_numbers:
             self.recipient_ids.filtered(lambda r: r.status == 'pending').unlink()

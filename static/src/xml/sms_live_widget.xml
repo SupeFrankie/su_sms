@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <t t-name="su_sms.SMSLiveWidget" t-inherit="web.TextField" t-inherit-mode="primary">
-        <xpath expr="//textarea" position="after">
+    <t t-name="su_sms.SMSLiveWidget" t-inherit="web.TextField" owl="1">
+        <xpath expr="//div[hasclass('o_field_widget')]" position="inside">
             <div class="d-flex justify-content-between mt-1 text-muted small">
-                <span>
-                    <t t-if="state.charCount > 160">
-                        <i class="fa fa-exclamation-triangle text-warning"/> Multi-part message
-                    </t>
+                <span t-if="state.charCount > 160" class="text-warning">
+                    <i class="fa fa-exclamation-triangle"/> Multi-part message
                 </span>
                 <span t-att-class="state.charCount > 160 ? 'text-danger fw-bold' : 'text-success'">
                     <t t-esc="state.charCount"/> characters | 
-                    <t t-esc="state.smsParts"/> SMS credit(s)
+                    <t t-esc="state.smsParts"/> SMS
                 </span>
             </div>
         </xpath>

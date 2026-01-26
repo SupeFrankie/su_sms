@@ -44,4 +44,5 @@ access_sms_administrator_manager,sms.administrator.manager,model_sms_administrat
 access_sms_compose_wizard,access_sms_compose_wizard,model_sms_compose_wizard,base.group_user,1,1,1,1
 access_sms_incoming_message,sms.incoming.message,model_sms_incoming_message,base.group_user,1,1,1,1
 access_sms_import_wizard_user,sms.import.wizard.user,model_sms_import_wizard,base.group_user,1,1,1,1
-access_sms_dashboard_user,sms.dashboard.user,model_sms_dashboard,base.group_user,1,0,0,0
+acaccess_sms_dashboard_all,sms.dashboard.all,model_sms_dashboard,base.group_user,1,0,0,0
+access_sms_dashboard_manager,sms.dashboard.manager,model_sms_dashboard,group_sms_system_admin,1,1,1,1cess_sms_dashboard_user,sms.dashboard.user,model_sms_dashboard,base.group_user,1,0,0,0
