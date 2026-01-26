@@ -6,42 +6,65 @@
             <field name="model">res.users</field>
             <field name="inherit_id" ref="base.view_users_form"/>
             <field name="arch" type="xml">
+                <!-- Add SMS Access tab after Preferences -->
                 <xpath expr="//page[@name='preferences']" position="after">
-                    <page string="SMS Access" groups="su_sms.group_sms_system_admin">
+                    <page string="SMS Access" name="sms_access" groups="su_sms.group_sms_system_admin">
                         <group>
-                            <group string="SMS Role">
-                                <field name="sms_role" readonly="1"/>
-                                <field name="department_id"/>
+                            <group string="SMS Department">
+                                <field name="department_id" 
+                                       domain="[]"
+                                       options="{'no_create': True}"/>
                             </group>
-                            <group string="SMS Permissions">
+                            
+                            <group string="SMS Permissions Summary">
                                 <div class="alert alert-info" role="alert">
-                                    <p><strong>Current SMS Access:</strong></p>
-                                    <ul>
-                                        <li invisible="sms_role != 'system_admin'">Full system access - All modules</li>
-                                        <li invisible="sms_role != 'administrator'">Staff SMS and Students SMS</li>
-                                        <li invisible="sms_role != 'faculty_admin'">Students SMS only</li>
-                                        <li invisible="sms_role != 'department_admin'">Staff SMS (Department only)</li>
-                                        <li invisible="sms_role != 'basic'">Ad Hoc and Manual SMS only</li>
-                                        
-                                        <li invisible="sms_role">No SMS access</li>
-                                    </ul>
-                                    <p class="text-muted"><small>Note: All users can access Ad Hoc and Manual SMS modules</small></p>
+                                    <h4 class="mb-3"> What This User Can Do:</h4>
+                                    
+                                    <div invisible="not context.get('uid')" class="mb-3">
+                                        <strong>Current Role:</strong>
+                                        <span class="badge badge-primary ml-2">
+                                            Check Access Rights tab → SMS Marketing section
+                                        </span>
+                                    </div>
+                                    
+                                    <table class="table table-sm table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Role</th>
+                                                <th>Permissions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>System Admin</strong></td>
+                                                <td> All SMS modules + Configuration</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Administrator</strong></td>
+                                                <td> Staff SMS + Students SMS</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Faculty Admin</strong></td>
+                                                <td> Students SMS only</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Dept Admin</strong></td>
+                                                <td> Staff SMS (Own department)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Basic User</strong></td>
+                                                <td> Ad Hoc + Manual SMS</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    
+                                    <p class="mt-3 mb-0">
+                                        <small> <strong>To change permissions:</strong> Go to <strong>Access Rights</strong> tab → Find <strong>SMS Marketing</strong> section → Check/uncheck roles</small>
+                                    </p>
                                 </div>
                             </group>
                         </group>
                     </page>
-                </xpath>
-            </field>
-        </record>
-
-        <record id="view_res_users_list_sms" model="ir.ui.view">
-            <field name="name">res.users.list.sms</field>
-            <field name="model">res.users</field>
-            <field name="inherit_id" ref="base.view_users_tree"/>
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='login']" position="after">
-                    <field name="sms_role" groups="su_sms.group_sms_system_admin"/>
-                    <field name="department_id" groups="su_sms.group_sms_system_admin"/>
                 </xpath>
             </field>
         </record>

@@ -8,7 +8,10 @@
                 <list string="SMS Gateways">
                     <field name="name"/>
                     <field name="gateway_type"/>
+                    <field name="username"/>
                     <field name="is_default"/>
+                    <field name="total_sent"/>
+                    <field name="last_used"/>
                     <field name="active"/>
                 </list>
             </field>
@@ -23,31 +26,63 @@
                         <button name="test_connection" 
                                 string="Test Connection" 
                                 type="object" 
-                                class="btn-primary"/>
+                                class="btn-primary"
+                                icon="fa-plug"/>
+                        <button name="refresh_from_env" 
+                                string="Refresh from .env" 
+                                type="object" 
+                                class="btn-secondary"
+                                icon="fa-refresh"/>
+                        <field name="active" widget="boolean_button" options="{'terminology': 'active'}"/>
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button class="oe_stat_button" icon="fa-paper-plane" type="object">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_value"><field name="total_sent"/></span>
+                                    <span class="o_stat_text">SMS Sent</span>
+                                </div>
+                            </button>
+                        </div>
+                        
                         <div class="alert alert-info" role="alert">
-                            <p><strong>Configuration Notice:</strong></p>
+                            <p><strong>📌 Configuration Notice:</strong></p>
                             <p>Gateway credentials are loaded from environment variables (.env file):</p>
                             <ul>
-                                <li>AT_USERNAME</li>
-                                <li>AT_API_KEY</li>
-                                <li>AT_SENDER_ID (optional)</li>
-                                <li>AT_ENVIRONMENT (sandbox/production)</li>
+                                <li><code>AT_USERNAME</code> - Your Africa's Talking username</li>
+                                <li><code>AT_API_KEY</code> - Your API key</li>
+                                <li><code>AT_SENDER_ID</code> - Sender ID (optional)</li>
+                                <li><code>AT_ENVIRONMENT</code> - sandbox/production</li>
                             </ul>
-                            <p>Contact your system administrator to update these values.</p>
+                            <p class="mb-0">Click "Refresh from .env" to reload credentials, or edit them below.</p>
                         </div>
                         
                         <group>
-                            <group>
+                            <group string="Gateway Information">
                                 <field name="name"/>
                                 <field name="gateway_type"/>
-                            </group>
-                            <group>
                                 <field name="is_default"/>
-                                <field name="active"/>
+                            </group>
+                            <group string="Statistics">
+                                <field name="last_used" readonly="1"/>
                             </group>
                         </group>
+                        
+                        <group string="API Credentials">
+                            <group>
+                                <field name="username"/>
+                                <field name="api_key" password="True"/>
+                            </group>
+                            <group>
+                                <field name="sender_id"/>
+                                <field name="test_phone_number" placeholder="+254712345678"/>
+                            </group>
+                        </group>
+                        
+                        <div class="alert alert-warning" role="alert" invisible="test_phone_number">
+                            <p class="mb-0"><strong>⚠ Test Phone Number Required</strong><br/>
+                            Please set a test phone number above to use the "Test Connection" button.</p>
+                        </div>
                     </sheet>
                 </form>
             </field>
@@ -57,6 +92,14 @@
             <field name="name">SMS Gateways</field>
             <field name="res_model">sms.gateway.configuration</field>
             <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Configure your first SMS Gateway
+                </p>
+                <p>
+                    Set up Africa's Talking or a custom API to start sending SMS.
+                </p>
+            </field>
         </record>
     </data>
 </odoo>

@@ -5,36 +5,48 @@ from odoo import models, fields, api, _
 class ResUsers(models.Model):
     _inherit = 'res.users'
     
-    sms_role = fields.Selection([
-        ('basic', 'Basic User'),
-        ('department_admin', 'Department Administrator'),
-        ('faculty_admin', 'Faculty Administrator'),
-        ('administrator', 'Administrator'),
-        ('system_admin', 'System Administrator'),
-    ], string='SMS Role', compute='_compute_sms_role', store=True)
-    
     department_id = fields.Many2one(
         'hr.department',
         string='Department',
-        help='Department this user belongs to'
+        help='Department this user belongs to for SMS filtering'
     )
     
-    #@api.depends('groups_id.users')
-    def _compute_sms_role(self):
-        """Compute SMS role based on security groups"""
-        for user in self:
-            if user.has_group('su_sms.group_sms_system_admin'):
-                user.sms_role = 'system_admin'
-            elif user.has_group('su_sms.group_sms_administrator'):
-                user.sms_role = 'administrator'
-            elif user.has_group('su_sms.group_sms_faculty_admin'):
-                user.sms_role = 'faculty_admin'
-            elif user.has_group('su_sms.group_sms_department_admin'):
-                user.sms_role = 'department_admin'
-            elif user.has_group('su_sms.group_sms_basic_user'):
-                user.sms_role = 'basic'
-            else:
-                user.sms_role = False
+    def get_sms_role(self):
+        """
+        Get SMS role for current user (not stored, computed on-demand)
+        Returns string representing the user's SMS role
+        """
+        self.ensure_one()
+        
+        # Check groups in priority order (highest to lowest)
+        if self.has_group('su_sms.group_sms_system_admin'):
+            return 'system_admin'
+        elif self.has_group('su_sms.group_sms_administrator'):
+            return 'administrator'
+        elif self.has_group('su_sms.group_sms_faculty_admin'):
+            return 'faculty_admin'
+        elif self.has_group('su_sms.group_sms_department_admin'):
+            return 'department_admin'
+        elif self.has_group('su_sms.group_sms_basic_user'):
+            return 'basic'
+        else:
+            return False
+    
+    def get_sms_role_display(self):
+        """Get human-readable SMS role name"""
+        self.ensure_one()
+        role = self.get_sms_role()
+        
+        role_names = {
+            'system_admin': 'SMS System Administrator',
+            'administrator': 'SMS Administrator',
+            'faculty_admin': 'SMS Faculty Administrator',
+            'department_admin': 'SMS Department Administrator',
+            'basic': 'SMS Basic User',
+            False: 'No SMS Access'
+        }
+        
+        return role_names.get(role, 'Unknown')
     
     def get_allowed_departments(self):
         """Get departments this user can send SMS to"""
@@ -56,7 +68,7 @@ class ResUsers(models.Model):
             return self.department_id
         
         elif self.has_group('su_sms.group_sms_department_admin'):
-            # Staff Admin can only access their department
+            # Department Admin can only access their department
             return self.department_id
         
         else:
@@ -73,7 +85,8 @@ class ResUsers(models.Model):
     def can_send_to_all_staff(self):
         """Check if user can send to all staff"""
         self.ensure_one()
-        return self.has_group('su_sms.group_sms_administrator') or \
+        return self.has_group('su_sms.group_sms_department_admin') or \
+               self.has_group('su_sms.group_sms_administrator') or \
                self.has_group('su_sms.group_sms_system_admin')
     
     def can_manage_configuration(self):
