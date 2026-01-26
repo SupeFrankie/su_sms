@@ -22,17 +22,16 @@ class SMSCampaign(models.Model):
     ], default='draft', tracking=True, string='Status')
     
     sms_type_id = fields.Many2one('sms.type', string='SMS Type', required=True, tracking=True)
-    
     message = fields.Text('Message Content', required=True)
     
-    manual_phone_numbers = fields.Text(string="Manual Phone Numbers", help="Enter numbers separated by commas")
+    manual_phone_numbers = fields.Text(string="Manual Phone Numbers")
     manual_numbers = fields.Text(string="Manual Numbers (Alias)", related='manual_phone_numbers', readonly=False)
 
     char_count = fields.Integer(string="Character Count", compute='_compute_message_stats', store=True)
     sms_count = fields.Integer(string="SMS Parts", compute='_compute_message_stats', store=True)
     
-    message_length = fields.Integer(string='Message Length (chars)', compute='_compute_message_stats')
-    sms_parts = fields.Integer(string='Number of SMS', related='sms_count')
+    message_length = fields.Integer(string='Message Length', related='char_count', readonly=True)
+    sms_parts = fields.Integer(string='Parts Count', related='sms_count', readonly=True)
 
     personalized = fields.Boolean('Use Personalization')
     send_immediately = fields.Boolean('Send Immediately', default=True)
@@ -49,23 +48,18 @@ class SMSCampaign(models.Model):
         ('manual', 'Manual'),
     ], string='Target Audience', required=True)
     
-    administrator_id = fields.Many2one('sms.administrator', string='Administrator', 
-        default=lambda self: self._default_administrator())
-    
+    administrator_id = fields.Many2one('sms.administrator', string='Administrator', default=lambda self: self._default_administrator())
     department_id = fields.Many2one('hr.department', string='Department')
     mailing_list_id = fields.Many2one('sms.mailing.list', string='Mailing List')
-    
-    gateway_id = fields.Many2one('sms.gateway.configuration', string='Gateway', 
-        default=lambda self: self._default_gateway())
-    
+    gateway_id = fields.Many2one('sms.gateway.configuration', string='Gateway', default=lambda self: self._default_gateway())
     schedule_date = fields.Datetime('Schedule Date', tracking=True)
     
-    total_recipients = fields.Integer(compute='_compute_statistics', store=True)
-    sent_count = fields.Integer(compute='_compute_statistics', store=True)
-    failed_count = fields.Integer(compute='_compute_statistics', store=True)
-    pending_count = fields.Integer(compute='_compute_statistics', store=True)
-    total_cost = fields.Float(compute='_compute_statistics', string='Total Cost', store=True)
-    success_rate = fields.Float(compute='_compute_statistics', string='Success Rate (%)', store=True)
+    total_recipients = fields.Integer(compute='_compute_statistics')
+    sent_count = fields.Integer(compute='_compute_statistics')
+    failed_count = fields.Integer(compute='_compute_statistics')
+    pending_count = fields.Integer(compute='_compute_statistics')
+    total_cost = fields.Float(compute='_compute_statistics', string='Total Cost')
+    success_rate = fields.Float(compute='_compute_statistics', string='Success Rate')
     
     recipient_ids = fields.One2many('sms.recipient', 'campaign_id', string='Recipients')
 
@@ -78,7 +72,6 @@ class SMSCampaign(models.Model):
                 parts = math.ceil(length / 153)
             record.char_count = length
             record.sms_count = parts
-            record.message_length = length
 
     @api.depends('recipient_ids', 'recipient_ids.status')
     def _compute_statistics(self):
