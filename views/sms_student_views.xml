@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Student SMS Filter Form View -->
         <record id="view_sms_student_filter_form" model="ir.ui.view">
             <field name="name">sms.student.filter.form</field>
             <field name="model">sms.student.filter</field>
@@ -14,7 +13,7 @@
                         
                         <group>
                             <group string="Academic Filters">
-                                <field name="administrator_id" readonly="1"/>
+                                <field name="administrator_id" invisible="1"/>
                                 <field name="school_id" options="{'no_create': True}"/>
                                 <field name="program_id" options="{'no_create': True}"/>
                                 <field name="course_id" options="{'no_create': True}"/>
@@ -43,14 +42,9 @@
                         <group string="Message">
                             <field name="message" widget="text" placeholder="Enter your message here..." nolabel="1"/>
                         </group>
-                        
-                        <div class="alert alert-info" role="alert">
-                            <p><strong>SMS Pricing:</strong> 1 SMS = 160 characters | Each additional 153 characters = +1 SMS</p>
-                        </div>
                     </sheet>
                     
                     <footer>
-                        <button name="action_view_recipients" string="Preview Recipients" type="object" class="btn-secondary"/>
                         <button name="action_send_sms" string="Send SMS" type="object" class="btn-primary"/>
                         <button string="Cancel" class="btn-secondary" special="cancel"/>
                     </footer>
@@ -63,7 +57,6 @@
             <field name="res_model">sms.student.filter</field>
             <field name="view_mode">form</field>
             <field name="target">new</field>
-            <field name="context">{}</field>
         </record>
     </data>
 </odoo>
