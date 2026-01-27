@@ -44,7 +44,7 @@ class SMSAdministrator(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'SMS Messages',
             'res_model': 'sms.message',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('administrator_id', '=', self.id)],
             'context': {'default_administrator_id': self.id}
         }

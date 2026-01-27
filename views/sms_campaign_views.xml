@@ -5,14 +5,15 @@
             <field name="name">sms.campaign.list</field>
             <field name="model">sms.campaign</field>
             <field name="arch" type="xml">
-                <list string="SMS Campaigns" decoration-success="status=='completed'" decoration-info="status=='draft'">
+                <list string="SMS Campaigns">
                     <field name="name"/>
                     <field name="sms_type_id"/>
                     <field name="schedule_date"/>
                     <field name="status"/>
                     <field name="total_recipients"/>
                     <field name="sent_count"/>
-                    <field name="total_cost" sum="Total Cost"/>
+                    <field name="total_cost"/>
+                    <field name="create_date"/>
                 </list>
             </field>
         </record>
@@ -24,52 +25,45 @@
                 <form string="SMS Campaign">
                     <header>
                         <button name="action_open_import_wizard" string="Import CSV" 
-                                type="object" class="btn-secondary" 
-                                invisible="target_type != 'adhoc' or status != 'draft'" icon="fa-upload"/>
-                                
+                                type="object"
+                                invisible="target_type != 'adhoc' or status != 'draft'"/>
                         <button name="action_prepare_recipients" string="Process Manual Numbers" 
-                                type="object" class="oe_highlight" 
+                                type="object"
                                 invisible="target_type != 'manual' or status != 'draft'"/>
-                                
-                        <button name="action_send" string="Send Now" type="object" class="oe_highlight" 
+                        <button name="action_send" string="Send Now" type="object"
                                 invisible="status != 'draft' or total_recipients == 0"/>
                         <button name="action_schedule" string="Schedule" type="object" 
                                 invisible="status != 'draft' or total_recipients == 0"/>
                         <button name="action_cancel" string="Cancel" type="object" 
                                 invisible="status not in ['draft', 'scheduled']"/>
-                                
-                        <field name="status" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,completed"/>
+                        <field name="status" widget="statusbar"/>
                     </header>
                     <sheet>
                         <div class="oe_title">
-                            <label for="name" class="oe_edit_only"/>
-                            <h1><field name="name" placeholder="e.g. End of Semester Reminder"/></h1>
+                            <h1><field name="name" placeholder="Campaign Name"/></h1>
                         </div>
-
                         <group>
                             <group>
-                                <field name="sms_type_id" options="{'no_create': True, 'no_open': True}"/>
+                                <field name="sms_type_id"/>
                                 <field name="target_type"/>
-                                <field name="administrator_id" invisible="1"/>
+                                <field name="administrator_id"/>
                             </group>
                             <group>
-                                <field name="schedule_date" widget="datetime" options="{'datepicker': {'mode': 'datetime'}}"/>
-                                <field name="gateway_id" groups="su_sms.group_sms_system_admin"/>
+                                <field name="schedule_date"/>
+                                <field name="gateway_id"/>
                                 <field name="send_immediately"/>
                             </group>
                         </group>
-
                         <notebook>
-                            <page string="Message &amp; Content">
-                                <field name="message" widget="sms_counter" placeholder="Type your message here..."/>
-                                
+                            <page string="Message">
+                                <field name="message" placeholder="Type your message here..."/>
                                 <group invisible="target_type != 'manual'">
-                                    <field name="manual_phone_numbers" placeholder="+2547..., +2547..."/>
+                                    <field name="manual_phone_numbers" placeholder="e.g. +254700000000, +254711111111"/>
                                 </group>
                             </page>
                             <page string="Recipients">
                                 <field name="recipient_ids">
-                                    <list decoration-success="status=='sent'" decoration-danger="status=='failed'">
+                                    <list>
                                         <field name="name"/>
                                         <field name="phone_number"/>
                                         <field name="status"/>
@@ -88,9 +82,17 @@
             <field name="arch" type="xml">
                 <search>
                     <field name="name"/>
-                    <filter string="Draft" name="draft" domain="[('status', '=', 'draft')]"/>
+                    <field name="sms_type_id"/>
+                    <filter string="Draft" name="draft" domain="[('status','=','draft')]"/>
+                    <filter string="Completed" name="completed" domain="[('status','=','completed')]"/>
                 </search>
             </field>
+        </record>
+
+        <record id="action_sms_dashboard" model="ir.actions.act_window">
+            <field name="name">SMS Dashboard</field>
+            <field name="res_model">sms.campaign</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record id="action_sms_campaign_all" model="ir.actions.act_window">

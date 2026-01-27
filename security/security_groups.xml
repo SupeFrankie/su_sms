@@ -1,45 +1,227 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <record id="module_category_sms" model="ir.module.category">
-            <field name="name">SMS Marketing</field>
-            <field name="description">Manage SMS campaigns and communications</field>
-            <field name="sequence">15</field>
-        </record>
-
+        <!-- Level 1: Basic User - Ad Hoc + Manual ONLY -->
         <record id="group_sms_basic_user" model="res.groups">
             <field name="name">SMS Basic User</field>
             <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
-            <field name="comment">Can send Ad Hoc and Manual SMS only</field>
         </record>
 
+        <!-- Level 2: Department Admin - Staff SMS -->
         <record id="group_sms_department_admin" model="res.groups">
             <field name="name">SMS Department Administrator</field>
             <field name="implied_ids" eval="[(4, ref('group_sms_basic_user'))]"/>
-            <field name="comment">Can send Staff SMS to their department</field>
         </record>
 
+        <!-- Level 3: Faculty Admin - Student SMS -->
         <record id="group_sms_faculty_admin" model="res.groups">
             <field name="name">SMS Faculty Administrator</field>
             <field name="implied_ids" eval="[(4, ref('group_sms_basic_user'))]"/>
-            <field name="comment">Can send Student SMS</field>
         </record>
 
+        <!-- Level 4: Administrator - Staff + Students -->
         <record id="group_sms_administrator" model="res.groups">
             <field name="name">SMS Administrator</field>
             <field name="implied_ids" eval="[(4, ref('group_sms_faculty_admin')), (4, ref('group_sms_department_admin'))]"/>
-            <field name="comment">Full SMS access - Staff and Students</field>
         </record>
 
+        <!-- Level 5: System Admin - Configuration + Everything -->
         <record id="group_sms_system_admin" model="res.groups">
             <field name="name">SMS System Administrator</field>
             <field name="implied_ids" eval="[(4, ref('group_sms_administrator'))]"/>
-            <field name="comment">Can configure gateways, API keys, system settings</field>
         </record>
 
-        <!-- TEMPORARY: Give all users SMS access -->
-        <record id="base.group_user" model="res.groups">
-            <field name="implied_ids" eval="[(4, ref('group_sms_administrator'))]"/>
+        <!-- Record Rules for Data Access Control -->
+        
+        <!-- Rule 1: Basic users can only see their own campaigns -->
+        <record id="rule_sms_campaign_own" model="ir.rule">
+            <field name="name">SMS Campaign: Own Campaigns</field>
+            <field name="model_id" ref="model_sms_campaign"/>
+            <field name="groups" eval="[(4, ref('group_sms_basic_user'))]"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 2: Administrators and System Admins see all campaigns -->
+        <record id="rule_sms_campaign_admin" model="ir.rule">
+            <field name="name">SMS Campaign: Admin Full Access</field>
+            <field name="model_id" ref="model_sms_campaign"/>
+            <field name="groups" eval="[(4, ref('group_sms_administrator'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 3: Users can see their own contacts -->
+        <record id="rule_sms_contact_own" model="ir.rule">
+            <field name="name">SMS Contact: Own Contacts</field>
+            <field name="model_id" ref="model_sms_contact"/>
+            <field name="groups" eval="[(4, ref('group_sms_basic_user'))]"/>
+            <field name="domain_force">['|', ('create_uid', '=', user.id), ('create_uid', '=', False)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Rule 4: Admins see all contacts -->
+        <record id="rule_sms_contact_admin" model="ir.rule">
+            <field name="name">SMS Contact: Admin Access</field>
+            <field name="model_id" ref="model_sms_contact"/>
+            <field name="groups" eval="[(4, ref('group_sms_administrator'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 5: Everyone can read recipients (for their campaigns) -->
+        <record id="rule_sms_recipient_read" model="ir.rule">
+            <field name="name">SMS Recipient: Read Access</field>
+            <field name="model_id" ref="model_sms_recipient"/>
+            <field name="groups" eval="[(4, ref('group_sms_basic_user'))]"/>
+            <field name="domain_force">[('campaign_id.create_uid', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 6: Admins see all recipients -->
+        <record id="rule_sms_recipient_admin" model="ir.rule">
+            <field name="name">SMS Recipient: Admin Access</field>
+            <field name="model_id" ref="model_sms_recipient"/>
+            <field name="groups" eval="[(4, ref('group_sms_administrator'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 7: Everyone can read mailing lists -->
+        <record id="rule_sms_mailing_list_read" model="ir.rule">
+            <field name="name">SMS Mailing List: User Access</field>
+            <field name="model_id" ref="model_sms_mailing_list"/>
+            <field name="groups" eval="[(4, ref('group_sms_basic_user'))]"/>
+            <field name="domain_force">['|', ('create_uid', '=', user.id), ('create_uid', '=', False)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Rule 8: Admins manage all mailing lists -->
+        <record id="rule_sms_mailing_list_admin" model="ir.rule">
+            <field name="name">SMS Mailing List: Admin Access</field>
+            <field name="model_id" ref="model_sms_mailing_list"/>
+            <field name="groups" eval="[(4, ref('group_sms_administrator'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 9: Everyone can read departments -->
+        <record id="rule_sms_department_read" model="ir.rule">
+            <field name="name">SMS Department: Read All</field>
+            <field name="model_id" ref="model_sms_department"/>
+            <field name="groups" eval="[(4, ref('group_sms_basic_user'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Rule 10: Only system admins can manage departments -->
+        <record id="rule_sms_department_manage" model="ir.rule">
+            <field name="name">SMS Department: System Admin Manage</field>
+            <field name="model_id" ref="model_sms_department"/>
+            <field name="groups" eval="[(4, ref('group_sms_system_admin'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 11: Everyone can read administrators -->
+        <record id="rule_sms_administrator_read" model="ir.rule">
+            <field name="name">SMS Administrator: Read All</field>
+            <field name="model_id" ref="model_sms_administrator"/>
+            <field name="groups" eval="[(4, ref('group_sms_basic_user'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Rule 12: Only system admins can manage administrators -->
+        <record id="rule_sms_administrator_manage" model="ir.rule">
+            <field name="name">SMS Administrator: System Admin Manage</field>
+            <field name="model_id" ref="model_sms_administrator"/>
+            <field name="groups" eval="[(4, ref('group_sms_system_admin'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 13: Everyone can read messages -->
+        <record id="rule_sms_message_read" model="ir.rule">
+            <field name="name">SMS Message: Read Access</field>
+            <field name="model_id" ref="model_sms_message"/>
+            <field name="groups" eval="[(4, ref('group_sms_basic_user'))]"/>
+            <field name="domain_force">[('create_uid', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Rule 14: Admins see all messages -->
+        <record id="rule_sms_message_admin" model="ir.rule">
+            <field name="name">SMS Message: Admin Access</field>
+            <field name="model_id" ref="model_sms_message"/>
+            <field name="groups" eval="[(4, ref('group_sms_administrator'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Rule 15: Blacklist - admins only can manage -->
+        <record id="rule_sms_blacklist_read" model="ir.rule">
+            <field name="name">SMS Blacklist: Read Only</field>
+            <field name="model_id" ref="model_sms_blacklist"/>
+            <field name="groups" eval="[(4, ref('group_sms_basic_user'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_sms_blacklist_admin" model="ir.rule">
+            <field name="name">SMS Blacklist: Admin Manage</field>
+            <field name="model_id" ref="model_sms_blacklist"/>
+            <field name="groups" eval="[(4, ref('group_sms_system_admin'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
         </record>
     </data>
 </odoo>

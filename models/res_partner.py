@@ -1,4 +1,5 @@
 #models/res_partner.py
+
 """
 Extend Odoo's Contact Model (res.partner)
 ==========================================
@@ -192,7 +193,7 @@ class ResPartner(models.Model):
             'name': _('SMS History'),
             'type': 'ir.actions.act_window',
             'res_model': 'sms.message.detail',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('mobile', '=', mobile)],
             'context': {'default_mobile': mobile}
         }

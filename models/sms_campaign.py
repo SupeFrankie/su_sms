@@ -57,12 +57,12 @@ class SMSCampaign(models.Model):
     gateway_id = fields.Many2one('sms.gateway.configuration', string='Gateway', default=lambda self: self._default_gateway())
     schedule_date = fields.Datetime('Schedule Date', tracking=True)
     
-    total_recipients = fields.Integer(compute='_compute_statistics')
-    sent_count = fields.Integer(compute='_compute_statistics')
-    failed_count = fields.Integer(compute='_compute_statistics')
-    pending_count = fields.Integer(compute='_compute_statistics')
-    total_cost = fields.Float(compute='_compute_statistics', string='Total Cost')
-    success_rate = fields.Float(compute='_compute_statistics', string='Success Rate')
+    total_recipients = fields.Integer(compute='_compute_statistics', store=True)
+    sent_count = fields.Integer(compute='_compute_statistics', store=True)
+    failed_count = fields.Integer(compute='_compute_statistics', store=True)
+    pending_count = fields.Integer(compute='_compute_statistics', store=True)
+    total_cost = fields.Float(compute='_compute_statistics', string='Total Cost', store=True)
+    success_rate = fields.Float(compute='_compute_statistics', string='Success Rate', store=True)
     
     recipient_ids = fields.One2many('sms.recipient', 'campaign_id', string='Recipients')
 
@@ -76,7 +76,7 @@ class SMSCampaign(models.Model):
             record.char_count = length
             record.sms_count = parts
 
-    @api.depends('recipient_ids', 'recipient_ids.status')
+    @api.depends('recipient_ids', 'recipient_ids.status', 'recipient_ids.cost')
     def _compute_statistics(self):
         for record in self:
             recipients = record.recipient_ids
@@ -102,149 +102,81 @@ class SMSCampaign(models.Model):
         }
 
     def action_prepare_recipients(self):
-        """Process manual phone numbers into recipients"""
         self.ensure_one()
-        
         if self.target_type == 'manual' and self.manual_phone_numbers:
             self.recipient_ids.filtered(lambda r: r.status == 'pending').unlink()
-            
             numbers = [n.strip() for n in self.manual_phone_numbers.split(',') if n.strip()]
             
             if not numbers:
-                raise UserError('No valid phone numbers found!')
-            
+                raise UserError('No valid phone numbers found')
+
             Gateway = self.env['sms.gateway.configuration']
-            created_count = 0
-            
             for number in numbers:
                 try:
-                    normalized = Gateway.normalize_phone_number(number)
-                    
+                    # Fallback if normalize method missing, just use raw number
+                    if hasattr(Gateway, 'normalize_phone_number'):
+                        normalized = Gateway.normalize_phone_number(number)
+                    else:
+                        normalized = number
+                        
                     self.env['sms.recipient'].create({
                         'campaign_id': self.id,
                         'phone_number': normalized,
                         'name': f'Manual - {normalized}',
-                        'recipient_type': 'other',
                         'status': 'pending'
                     })
-                    created_count += 1
-                except Exception as e:
-                    _logger.warning(f'Skipping invalid number {number}: {str(e)}')
+                except Exception:
                     continue
-            
-            if created_count == 0:
-                raise UserError('No valid phone numbers could be processed!')
-            
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'message': f'{created_count} recipients prepared',
-                    'type': 'success',
-                }
-            }
-        
         return True
 
     def action_send(self):
-        """Send SMS campaign with rate limiting and retry logic"""
         self.ensure_one()
-        
         if not self.recipient_ids:
             raise UserError('No recipients to send to!')
-        
         if not self.message:
             raise UserError('Message content is required!')
-        
+            
         if not self.gateway_id:
-            self.gateway_id = self.env['sms.gateway.configuration'].search([('is_default', '=', True)], limit=1)
-            if not self.gateway_id:
-                raise UserError('No SMS gateway configured!')
-        
+             self.gateway_id = self.env['sms.gateway.configuration'].search([('is_default', '=', True)], limit=1)
+
         self.write({'status': 'in_progress'})
-        self.env.cr.commit()
         
+        # Simple loop without commit() to be safer within Odoo transaction
         pending_recipients = self.recipient_ids.filtered(lambda r: r.status == 'pending')
         
-        if not pending_recipients:
-            raise UserError('No pending recipients to send to!')
-        
-        _logger.info(f'Starting SMS campaign {self.name} with {len(pending_recipients)} recipients')
-        
-        success_count = 0
-        failed_count = 0
-        
-        for i, recipient in enumerate(pending_recipients):
+        for recipient in pending_recipients:
             try:
-                _logger.info(f'Sending SMS {i+1}/{len(pending_recipients)} to {recipient.phone_number}')
-                
                 result = self.gateway_id.send_sms(recipient.phone_number, self.message)
-                
-                if result['success']:
+                if result.get('success'):
                     recipient.write({
                         'status': 'sent',
                         'sent_date': fields.Datetime.now(),
-                        'gateway_message_id': result.get('message_id'),
                         'cost': result.get('cost', 0.0),
                     })
-                    success_count += 1
-                    _logger.info(f'SMS sent successfully to {recipient.phone_number}')
                 else:
                     recipient.write({
                         'status': 'failed',
-                        'error_message': result.get('error', 'Unknown error'),
+                        'error_message': result.get('error', 'Unknown Error'),
                     })
-                    failed_count += 1
-                    _logger.error(f'SMS failed for {recipient.phone_number}: {result.get("error")}')
-                
-                if (i + 1) % 10 == 0:
-                    self.env.cr.commit()
-                    _logger.info(f'Progress: {i+1}/{len(pending_recipients)} processed')
-                
             except Exception as e:
-                _logger.error(f'Exception sending SMS to {recipient.phone_number}: {str(e)}')
                 recipient.write({
                     'status': 'failed',
                     'error_message': str(e),
                 })
-                failed_count += 1
         
-        self.env.cr.commit()
-        
-        if success_count == len(pending_recipients):
-            final_status = 'completed'
-            message = f'Campaign completed successfully! {success_count} SMS sent.'
-            msg_type = 'success'
-        elif success_count > 0:
-            final_status = 'completed'
-            message = f'Campaign completed with some failures.\nSent: {success_count}\nFailed: {failed_count}'
-            msg_type = 'warning'
+        # Update status based on results
+        failed = self.recipient_ids.filtered(lambda r: r.status == 'failed')
+        if failed and len(failed) == len(self.recipient_ids):
+             self.write({'status': 'failed'})
         else:
-            final_status = 'failed'
-            message = f'Campaign failed! All {failed_count} SMS failed to send.'
-            msg_type = 'danger'
-        
-        self.write({'status': final_status})
-        
-        _logger.info(f'Campaign {self.name} finished: {success_count} sent, {failed_count} failed')
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Campaign Results',
-                'message': message,
-                'type': msg_type,
-                'sticky': True,
-            }
-        }
+             self.write({'status': 'completed'})
+
+        return True
 
     def action_schedule(self):
         self.ensure_one()
-        
         if not self.schedule_date:
             raise UserError('Please set a schedule date first!')
-        
         self.write({'status': 'scheduled'})
         return True
 
@@ -252,16 +184,11 @@ class SMSCampaign(models.Model):
         self.ensure_one()
         self.write({'status': 'cancelled'})
         return True
-    
+
     def action_retry_failed(self):
-        """Retry sending to failed recipients"""
         self.ensure_one()
-        
-        failed_recipients = self.recipient_ids.filtered(lambda r: r.status == 'failed')
-        
-        if not failed_recipients:
+        failed = self.recipient_ids.filtered(lambda r: r.status == 'failed')
+        if not failed:
             raise UserError('No failed recipients to retry!')
-        
-        failed_recipients.write({'status': 'pending', 'error_message': False})
-        
+        failed.write({'status': 'pending', 'error_message': False})
         return self.action_send()

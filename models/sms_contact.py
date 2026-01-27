@@ -163,7 +163,7 @@ class SMSContact(models.Model):
         
         return phone
     
-    # ACTIONS - MOVED action_send_sms HERE (was in wrong class)
+    # ----------- ACTIONS ------------- 
     def action_send_sms(self):
         """Open SMS compose wizard for this contact"""
         self.ensure_one()
