@@ -52,7 +52,7 @@ class SMSCampaign(models.Model):
     ], string='Target Audience', required=True)
     
     administrator_id = fields.Many2one('res.users', string='Administrator', default=lambda self: self.env.user)
-    department_id = fields.Many2one('hr.department', string='Department')
+    department_id = fields.Many2one('sms.department', string='Department')
     mailing_list_id = fields.Many2one('sms.mailing.list', string='Mailing List')
     gateway_id = fields.Many2one('sms.gateway.configuration', string='Gateway', default=lambda self: self._default_gateway())
     schedule_date = fields.Datetime('Schedule Date', tracking=True)

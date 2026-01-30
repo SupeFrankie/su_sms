@@ -28,7 +28,8 @@
         'views/sms_template_views.xml',
         'views/sms_mailing_list_views.xml',
         'views/sms_recipient_views.xml',
-        'views/sms_dashboard_views.xml',  
+        'views/sms_dashboard_views.xml',
+        #'views/sms_dashboard_action.xml',
         
         # 5. CAMPAIGNS
         'views/sms_campaign_views.xml',
@@ -53,6 +54,11 @@
     # ASSETS DISABLED FOR NOW
     # 'assets': {
     #     'web.assets_backend': [
+            
+        
+            # ''su_sms/static/src/css/sms_dashboard.css',
+            #'su_sms/static/src/xml/sms_dashboard.xml',
+            #'su_sms/static/src/js/sms_dashboard.js','        
     #         'su_sms/static/src/xml/sms_live_widget.xml',
     #         'su_sms/static/src/js/sms_live_widget.js',
     #         'su_sms/static/src/xml/sms_systray_balance.xml',

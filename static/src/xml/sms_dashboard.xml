@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="su_sms.dashboard_template">
+        <div class="sms_dashboard_container">
+            <div class="sms_sidebar">
+                <div class="sidebar_header">
+                    <h2><i class="fa fa-envelope"/> SMS</h2>
+                </div>
+                
+                <div class="sidebar_menu">
+                    <button class="menu_btn active" t-on-click="() => this.reload()">
+                        <i class="fa fa-tachometer"/> Dashboard
+                    </button>
+                    
+                    <div class="menu_section">CAMPAIGNS</div>
+                    <button class="menu_btn" t-on-click="() => this.openView('sms.campaign', 'list')">
+                        <i class="fa fa-list-ul"/> All Campaigns
+                    </button>
+                    <button class="menu_btn" t-on-click="() => this.createCampaign()">
+                        <i class="fa fa-plus-circle"/> New Campaign
+                    </button>
+
+                    <div class="menu_section">CONTACTS</div>
+                    <button class="menu_btn" t-on-click="() => this.openView('sms.mailing.list', 'list')">
+                        <i class="fa fa-address-book"/> Mailing Lists
+                    </button>
+                    <button class="menu_btn" t-on-click="() => this.openView('sms.recipient', 'list')">
+                        <i class="fa fa-users"/> Recipients
+                    </button>
+                    
+                    <div class="menu_section">CONFIG</div>
+                    <button class="menu_btn" t-on-click="() => this.openView('sms.gateway.configuration', 'list')">
+                        <i class="fa fa-cogs"/> Gateway
+                    </button>
+                </div>
+            </div>
+
+            <div class="sms_content">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat_card primary">
+                            <div class="stat_value"><t t-esc="state.stats.campaigns"/></div>
+                            <div class="stat_label">Campaigns</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat_card success">
+                            <div class="stat_value"><t t-esc="state.stats.sent"/></div>
+                            <div class="stat_label">SMS Sent</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat_card warning">
+                            <div class="stat_value">KES <t t-esc="state.stats.cost"/></div>
+                            <div class="stat_label">Total Cost</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Quick Actions</h3>
+                <div class="row action_grid">
+                    <div class="col-md-4" t-on-click="() => this.openAction('su_sms.action_sms_staff')">
+                        <div class="action_box">
+                            <i class="fa fa-user-tie fa-3x"/>
+                            <h4>Message Staff</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4" t-on-click="() => this.openAction('su_sms.action_sms_student')">
+                        <div class="action_box">
+                            <i class="fa fa-graduation-cap fa-3x"/>
+                            <h4>Message Students</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4" t-on-click="() => this.openAction('su_sms.action_sms_adhoc')">
+                        <div class="action_box">
+                            <i class="fa fa-paper-plane fa-3x"/>
+                            <h4>Ad Hoc SMS</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
