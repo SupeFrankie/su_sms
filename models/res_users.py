@@ -17,6 +17,10 @@ class ResUsers(models.Model):
         Returns string representing the user's SMS role
         """
         self.ensure_one()
+        # Defensive: by convention, numeric logins represent student identities.
+        # Students must never have SMS access, even if misconfigured into SMS groups.
+        if self.login and str(self.login).isnumeric():
+            return False
         
         # Check groups in priority order (highest to lowest)
         if self.has_group('su_sms.group_sms_system_admin'):
@@ -51,6 +55,9 @@ class ResUsers(models.Model):
     def get_allowed_departments(self):
         """Get departments this user can send SMS to"""
         self.ensure_one()
+        # Students (numeric logins) must never have SMS sending scope, regardless of groups.
+        if self.login and str(self.login).isnumeric():
+            return self.env['hr.department'].browse([])
         
         if self.has_group('su_sms.group_sms_system_admin') or \
            self.has_group('su_sms.group_sms_administrator'):
@@ -78,6 +85,9 @@ class ResUsers(models.Model):
     def can_send_to_all_students(self):
         """Check if user can send to all students"""
         self.ensure_one()
+        # Students must never have SMS permissions, even if misconfigured into SMS groups.
+        if self.login and str(self.login).isnumeric():
+            return False
         return self.has_group('su_sms.group_sms_faculty_admin') or \
                self.has_group('su_sms.group_sms_administrator') or \
                self.has_group('su_sms.group_sms_system_admin')
@@ -85,6 +95,9 @@ class ResUsers(models.Model):
     def can_send_to_all_staff(self):
         """Check if user can send to all staff"""
         self.ensure_one()
+        # Students must never have SMS permissions, even if misconfigured into SMS groups.
+        if self.login and str(self.login).isnumeric():
+            return False
         return self.has_group('su_sms.group_sms_department_admin') or \
                self.has_group('su_sms.group_sms_administrator') or \
                self.has_group('su_sms.group_sms_system_admin')
@@ -92,4 +105,7 @@ class ResUsers(models.Model):
     def can_manage_configuration(self):
         """Check if user can manage system configuration"""
         self.ensure_one()
+        # Students must never manage SMS configuration, regardless of group misconfiguration.
+        if self.login and str(self.login).isnumeric():
+            return False
         return self.has_group('su_sms.group_sms_system_admin')

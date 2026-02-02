@@ -44,6 +44,7 @@
         'views/res_users_views.xml',
         'views/sms_department_expenditure_views.xml',
         'views/sms_administrator_views.xml',
+        'views/ldap_test_views.xml',
         'views/dataservice_test_views.xml',
         
         # 7. MENUS
@@ -69,7 +70,7 @@
     # },
     
     'external_dependencies': {
-        'python': ['python-dotenv', 'ldap3', 'python-ldap', 'requests'],
+        'python': ['requests'],
     },
     
     'installable': True,

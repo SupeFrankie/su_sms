@@ -87,7 +87,13 @@ class SmsGatewayConfiguration(models.Model):
         if vals.get('is_default'):
             self.search([('is_default', '=', True), ('id', '!=', self.id)]).write({'is_default': False})
         return super(SmsGatewayConfiguration, self).write(vals)
-    
+
+    @api.model
+    def create_from_env(self):
+        """Called on module install by data/gateway_data.xml. Safe to run multiple times; no-op if a record already exists."""
+        if self.search_count([]) == 0:
+            self.create({'name': 'Default Gateway'})
+
     def _compute_statistics(self):
         """Compute gateway statistics"""
         for gateway in self:

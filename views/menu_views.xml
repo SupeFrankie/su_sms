@@ -109,12 +109,19 @@
                       sequence="50"
                       groups="group_sms_system_admin"/>
 
-             <!-- For Test Server -->
-        <menuitem id="menu_test_dataservice"
-                  name="Test Dataservice Connection"
+          <menuitem id="menu_test_all_services"
+                  name="Test All Services"
                   parent="menu_sms_marketing_config"
-                  action="action_test_dataservice"
-                  sequence="65"
+                  action="action_test_all_services"
+                  sequence="70"
                   groups="group_sms_system_admin"/>
+
+         <!-- Menu Item -->
+        <menuitem id="menu_test_ldap"
+                  name="Test LDAP Connection"
+                  parent="menu_sms_marketing_config"
+                  action="action_test_ldap"
+                  sequence="60"
+                  groups="group_sms_system_admin"/>          
     </data>
 </odoo>

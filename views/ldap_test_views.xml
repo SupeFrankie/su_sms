@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- LDAP Connection Test Action -->
+        <record id="action_test_ldap" model="ir.actions.server">
+            <field name="name">Test LDAP Connection</field>
+            <field name="model_id" ref="model_sms_webservice_adapter"/>
+            <field name="state">code</field>
+            <field name="code">
+results = model.test_ldap_connection()
+
+if results['success']:
+    config = results['config']
+    message = f"""
+✓ LDAP CONNECTION SUCCESSFUL
+
+Host: {config['host']}:{config['port']}
+Base DN: {config['base_dn']}
+
+Staff Domain: {config['staff_domain']}
+Student Domain: {config['student_domain']}
+
+Server Info:
+{results.get('server_info', 'N/A')}
+"""
+    raise UserError(message)
+else:
+    raise UserError(f"✗ LDAP CONNECTION FAILED\n\n{results['message']}")
+            </field>
+        </record>
+    </data>
+</odoo>

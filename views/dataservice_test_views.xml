@@ -1,42 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Dataservice Health Check Action -->
-        <record id="action_test_dataservice" model="ir.actions.server">
-            <field name="name">Test Dataservice Connection</field>
+        <!-- Combined LDAP + Dataservice Test -->
+        <record id="action_test_all_services" model="ir.actions.server">
+            <field name="name">Test All Services</field>
             <field name="model_id" ref="model_sms_webservice_adapter"/>
             <field name="state">code</field>
             <field name="code">
-results = model.test_dataservice_connection()
+results = model.test_all_connections()
 
+ldap_status = results['ldap']['success']
 student_status = results['student_service']['status']
 staff_status = results['staff_service']['status']
 
 message = f"""
-=== DATASERVICE CONNECTION TEST ===
+=== SYSTEM CONNECTIVITY TEST ===
 
- !! Timestamp: {results['timestamp']}
+ Timestamp: {results['timestamp']}
 
- !! STUDENT SERVICE:
+ LDAP (Active Directory):
+   Status: {'ONLINE' if ldap_status else 'OFFLINE'}
+   Message: {results['ldap']['message']}
+
+ STUDENT DATASERVICE:
    Status: {student_status.upper()}
    Message: {results['student_service']['message']}
 
-!! STAFF SERVICE:
+ STAFF DATASERVICE:
    Status: {staff_status.upper()}
    Message: {results['staff_service']['message']}
 
 ================================
 """
 
-if student_status == 'online' and staff_status == 'online':
+all_online = ldap_status and student_status == 'online' and staff_status == 'online'
+
+if all_online:
     raise UserError(f"✓ ALL SERVICES ONLINE\n\n{message}")
-elif student_status == 'offline' or staff_status == 'offline':
-    raise UserError(f"!! SOME SERVICES OFFLINE\n\nFalling back to mock data.\n\n{message}")
 else:
-    raise UserError(f"✗ CONNECTION ERROR\n\n{message}")
+    raise UserError(f"⚠ SOME SERVICES OFFLINE\n\n{message}")
             </field>
         </record>
-
-       
+        
     </data>
 </odoo>
