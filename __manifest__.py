@@ -31,6 +31,7 @@
         'views/sms_dashboard_views.xml',
         #'views/sms_dashboard_action.xml',
         
+        
         # 5. CAMPAIGNS
         'views/sms_campaign_views.xml',
         'views/sms_adhoc_views.xml',
@@ -43,6 +44,7 @@
         'views/res_users_views.xml',
         'views/sms_department_expenditure_views.xml',
         'views/sms_administrator_views.xml',
+        'views/dataservice_test_views.xml',
         
         # 7. MENUS
         'views/menu_views.xml',
@@ -67,7 +69,7 @@
     # },
     
     'external_dependencies': {
-        'python': ['python-dotenv'],
+        'python': ['python-dotenv', 'ldap3', 'python-ldap', 'requests'],
     },
     
     'installable': True,

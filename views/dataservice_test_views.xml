@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Dataservice Health Check Action -->
+        <record id="action_test_dataservice" model="ir.actions.server">
+            <field name="name">Test Dataservice Connection</field>
+            <field name="model_id" ref="model_sms_webservice_adapter"/>
+            <field name="state">code</field>
+            <field name="code">
+results = model.test_dataservice_connection()
+
+student_status = results['student_service']['status']
+staff_status = results['staff_service']['status']
+
+message = f"""
+=== DATASERVICE CONNECTION TEST ===
+
+ !! Timestamp: {results['timestamp']}
+
+ !! STUDENT SERVICE:
+   Status: {student_status.upper()}
+   Message: {results['student_service']['message']}
+
+!! STAFF SERVICE:
+   Status: {staff_status.upper()}
+   Message: {results['staff_service']['message']}
+
+================================
+"""
+
+if student_status == 'online' and staff_status == 'online':
+    raise UserError(f"✓ ALL SERVICES ONLINE\n\n{message}")
+elif student_status == 'offline' or staff_status == 'offline':
+    raise UserError(f"!! SOME SERVICES OFFLINE\n\nFalling back to mock data.\n\n{message}")
+else:
+    raise UserError(f"✗ CONNECTION ERROR\n\n{message}")
+            </field>
+        </record>
+
+       
+    </data>
+</odoo>

@@ -8,9 +8,9 @@ access_sms_blacklist_system,sms.blacklist.system,model_sms_blacklist,group_sms_s
 access_sms_mailing_list_user,sms.mailing_list.user,model_sms_mailing_list,group_sms_basic_user,1,1,1,0
 access_sms_mailing_list_admin,sms.mailing_list.admin,model_sms_mailing_list,group_sms_administrator,1,1,1,1
 access_sms_mailing_list_system,sms.mailing_list.system,model_sms_mailing_list,group_sms_system_admin,1,1,1,1
-access_sms_message_user,sms.message.user,model_sms_message,group_sms_basic_user,1,1,1,0
-access_sms_message_admin,sms.message.admin,model_sms_message,group_sms_administrator,1,1,1,1
-access_sms_message_system,sms.message.system,model_sms_message,group_sms_system_admin,1,1,1,1
+access_sms_message_user,sms.detail.user,model_sms_detail,group_sms_basic_user,1,0,0,0
+access_sms_message_admin,sms.detail.admin,model_sms_detail,group_sms_administrator,1,1,0,0
+access_sms_message_system,sms.detail.system,model_sms_detail,group_sms_system_admin,1,1,1,1
 access_sms_detail_user,sms.detail.user,model_sms_detail,group_sms_basic_user,1,0,0,0
 access_sms_detail_admin,sms.detail.admin,model_sms_detail,group_sms_administrator,1,1,1,1
 access_sms_detail_system,sms.detail.system,model_sms_detail,group_sms_system_admin,1,1,1,1
@@ -21,7 +21,7 @@ access_sms_tag_all,sms.tag.all,model_sms_tag,group_sms_basic_user,1,1,1,0
 access_sms_campaign_user,sms.campaign.user,model_sms_campaign,group_sms_basic_user,1,1,1,0
 access_sms_campaign_admin,sms.campaign.admin,model_sms_campaign,group_sms_administrator,1,1,1,1
 access_sms_campaign_system,sms.campaign.system,model_sms_campaign,group_sms_system_admin,1,1,1,1
-access_sms_recipient_user,sms.recipient.user,model_sms_recipient,group_sms_basic_user,1,1,1,0
+access_sms_recipient_user,sms.recipient.user,model_sms_recipient,group_sms_basic_user,1,1,1,1
 access_sms_recipient_admin,sms.recipient.admin,model_sms_recipient,group_sms_administrator,1,1,1,1
 access_sms_recipient_system,sms.recipient.system,model_sms_recipient,group_sms_system_admin,1,1,1,1
 access_sms_gateway_user,sms.gateway.user,model_sms_gateway_configuration,group_sms_basic_user,1,0,0,0
