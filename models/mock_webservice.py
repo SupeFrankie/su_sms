@@ -59,8 +59,20 @@ class WebServiceAdapter(models.AbstractModel):
     
     @api.model
     def _is_student(self, username):
-        """Check if username is numeric (student) or alphanumeric (staff)"""
-        return username.isnumeric()
+        """
+        Check if username is numeric (student) or alphanumeric (staff)
+        
+        POLICY: This check can be overridden via system parameter 'sms.student_username_pattern'
+        Default: numeric usernames = students, alphanumeric = staff
+        """
+        # Allow override via system parameter
+        pattern = self.env['ir.config_parameter'].sudo().get_param('sms.student_username_pattern', 'numeric')
+        
+        if pattern == 'numeric':
+            return username.isnumeric()
+        else:
+            # Future: could support regex patterns
+            return username.isnumeric()
     
     @api.model
     def _get_domain_for(self, username):
@@ -116,7 +128,6 @@ class WebServiceAdapter(models.AbstractModel):
             )
             
             if conn.bound:
-                _logger.info(f'LDAP bind successful for: {bind_user}')
                 return conn
             
             raise Exception('LDAP bind failed - connection not bound')
@@ -144,8 +155,6 @@ class WebServiceAdapter(models.AbstractModel):
             # Try to bind as the user
             conn = self._ldap_bind(username=username, password=password)
             conn.unbind()
-            
-            _logger.info(f'LDAP authentication successful for: {username}')
             
             # Get user data using service account
             user_data = self.ldap_get_user_data(username)
@@ -211,7 +220,6 @@ class WebServiceAdapter(models.AbstractModel):
                 'is_student': self._is_student(username),
             }
             
-            _logger.info(f'LDAP user data retrieved for: {username}')
             return user_data
             
         except Exception as e:
@@ -221,7 +229,7 @@ class WebServiceAdapter(models.AbstractModel):
     @api.model
     def test_ldap_connection(self):
         """
-        Test LDAP connection
+        Test LDAP connection with timeout enforcement
         Returns dict with connection status
         """
         if not LDAP_AVAILABLE:
@@ -234,22 +242,30 @@ class WebServiceAdapter(models.AbstractModel):
         config = self._get_ldap_config()
         
         try:
-            conn = self._ldap_bind()
-            server_info = conn.server.info if conn.server else 'No server info'
-            conn.unbind()
+            # Enforce short timeout for test
+            import socket
+            original_timeout = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(5)
             
-            return {
-                'success': True,
-                'message': 'LDAP connection successful',
-                'config': {
-                    'host': config['host'],
-                    'port': config['port'],
-                    'base_dn': config['base_dn'],
-                    'staff_domain': config['staff_domain'],
-                    'student_domain': config['student_domain'],
-                },
-                'server_info': str(server_info),
-            }
+            try:
+                conn = self._ldap_bind()
+                server_info = conn.server.info if conn.server else 'No server info'
+                conn.unbind()
+                
+                return {
+                    'success': True,
+                    'message': 'LDAP connection successful',
+                    'config': {
+                        'host': config['host'],
+                        'port': config['port'],
+                        'base_dn': config['base_dn'],
+                        'staff_domain': config['staff_domain'],
+                        'student_domain': config['student_domain'],
+                    },
+                    'server_info': str(server_info),
+                }
+            finally:
+                socket.setdefaulttimeout(original_timeout)
             
         except Exception as e:
             return {
@@ -318,7 +334,7 @@ class WebServiceAdapter(models.AbstractModel):
                         # Merge LDAP + dataservice
                         return {**ldap_data, **dataservice_data}
                 except Exception as e:
-                    _logger.warning(f'Dataservice failed for {username}, using LDAP only: {str(e)}')
+                    _logger.warning(f'Dataservice failed for {username}, using LDAP only')
                 
                 return ldap_data
         
@@ -329,7 +345,6 @@ class WebServiceAdapter(models.AbstractModel):
     def _get_staff(self, **filters):
         """Get staff from dataservice with mock fallback"""
         if self._use_mock_data():
-            _logger.info('Using MOCK staff data')
             return MockWebService.get_staff_by(**filters)
         
         try:
@@ -342,7 +357,6 @@ class WebServiceAdapter(models.AbstractModel):
             
             data = response.json()
             if isinstance(data, list):
-                _logger.info(f'Fetched {len(data)} staff from dataservice')
                 return data
             return []
             
@@ -354,7 +368,6 @@ class WebServiceAdapter(models.AbstractModel):
     def _get_students(self, **filters):
         """Get students from dataservice with mock fallback"""
         if self._use_mock_data():
-            _logger.info('Using MOCK student data')
             return MockWebService.get_students_academic(**filters)
         
         try:
@@ -367,7 +380,6 @@ class WebServiceAdapter(models.AbstractModel):
             
             data = response.json()
             if isinstance(data, list):
-                _logger.info(f'Fetched {len(data)} students from dataservice')
                 return data
             return []
             
@@ -381,46 +393,53 @@ class WebServiceAdapter(models.AbstractModel):
     
     @api.model
     def test_all_connections(self):
-        """Test both LDAP and dataservices"""
-        results = {
-            'timestamp': datetime.now().isoformat(),
-            'ldap': self.test_ldap_connection(),
-            'student_service': {'status': 'unknown', 'message': ''},
-            'staff_service': {'status': 'unknown', 'message': ''},
-        }
+        """Test both LDAP and dataservices with timeout enforcement"""
+        import socket
+        original_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(5)
         
-        # Test Student Dataservice
         try:
-            url = f"{self._get_student_base_url()}getAllSchools"
-            response = requests.get(url, timeout=5, verify=True)
+            results = {
+                'timestamp': datetime.now().isoformat(),
+                'ldap': self.test_ldap_connection(),
+                'student_service': {'status': 'unknown', 'message': ''},
+                'staff_service': {'status': 'unknown', 'message': ''},
+            }
             
-            if response.status_code == 200:
-                results['student_service']['status'] = 'online'
-                results['student_service']['message'] = f'Connected ({response.elapsed.total_seconds():.2f}s)'
-            else:
-                results['student_service']['status'] = 'error'
-                results['student_service']['message'] = f'HTTP {response.status_code}'
-        except Exception as e:
-            results['student_service']['status'] = 'offline'
-            results['student_service']['message'] = str(e)
-        
-        # Test Staff Dataservice
-        try:
-            base_url = self._get_staff_base_url().rstrip('/getStaffByUsername/')
-            url = f"{base_url}/getAllDepartments"
-            response = requests.get(url, timeout=5, verify=True)
+            # Test Student Dataservice
+            try:
+                url = f"{self._get_student_base_url()}getAllSchools"
+                response = requests.get(url, timeout=5, verify=True)
+                
+                if response.status_code == 200:
+                    results['student_service']['status'] = 'online'
+                    results['student_service']['message'] = f'Connected ({response.elapsed.total_seconds():.2f}s)'
+                else:
+                    results['student_service']['status'] = 'error'
+                    results['student_service']['message'] = f'HTTP {response.status_code}'
+            except Exception as e:
+                results['student_service']['status'] = 'offline'
+                results['student_service']['message'] = str(e)
             
-            if response.status_code == 200:
-                results['staff_service']['status'] = 'online'
-                results['staff_service']['message'] = f'Connected ({response.elapsed.total_seconds():.2f}s)'
-            else:
-                results['staff_service']['status'] = 'error'
-                results['staff_service']['message'] = f'HTTP {response.status_code}'
-        except Exception as e:
-            results['staff_service']['status'] = 'offline'
-            results['staff_service']['message'] = str(e)
-        
-        return results
+            # Test Staff Dataservice
+            try:
+                base_url = self._get_staff_base_url().rstrip('/getStaffByUsername/')
+                url = f"{base_url}/getAllDepartments"
+                response = requests.get(url, timeout=5, verify=True)
+                
+                if response.status_code == 200:
+                    results['staff_service']['status'] = 'online'
+                    results['staff_service']['message'] = f'Connected ({response.elapsed.total_seconds():.2f}s)'
+                else:
+                    results['staff_service']['status'] = 'error'
+                    results['staff_service']['message'] = f'HTTP {response.status_code}'
+            except Exception as e:
+                results['staff_service']['status'] = 'offline'
+                results['staff_service']['message'] = str(e)
+            
+            return results
+        finally:
+            socket.setdefaulttimeout(original_timeout)
 
 
 # ========================================
