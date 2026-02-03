@@ -121,7 +121,6 @@
                   name="Test LDAP Connection"
                   parent="menu_sms_marketing_config"
                   action="action_test_ldap"
-                  sequence="60"
-                  groups="group_sms_system_admin"/>          
+                  sequence="60"/>          
     </data>
 </odoo>

@@ -52,6 +52,54 @@ class WebServiceAdapter(models.AbstractModel):
             'staff_domain': os.getenv('LDAP_STAFF_DOMAIN', 'strathmore.local'),
             'student_domain': os.getenv('LDAP_STUDENT_DOMAIN', 'students.strathmore.edu'),
         }
+    
+    @api.model
+    def ldap_authenticate_user(self, username, password):
+        """
+        Authenticate a user against LDAP (Active Directory).
+        Returns: (success_boolean, result_dictionary)
+        """
+        # 1. Check if library is installed
+        if not LDAP_AVAILABLE:
+            return False, {'error': 'ldap3 library not installed on server'}
+        
+        # 2. Load Config
+        config = self._get_ldap_config()
+        
+        # 3. Determine Domain (Student vs Staff)
+        # Logic: If username is all numbers (e.g. 123456), it's a student.
+        if str(username).isdigit():
+            domain = config['student_domain']
+        else:
+            domain = config['staff_domain']
+            
+        # 4. Construct the User DN (user@domain.com)
+        user_principal = f"{username}@{domain}"
+        
+        try:
+            # 5. Connect to Server
+            server = Server(config['host'], port=config['port'], get_info=ALL)
+            
+            # 6. Try to Bind (Login)
+            conn = Connection(
+                server, 
+                user=user_principal, 
+                password=password,
+                authentication=SIMPLE,
+                auto_bind=True
+            )
+            
+            # If we get here, login worked!
+            conn.unbind()
+            return True, {
+                'username': username,
+                'domain': domain,
+                'message': 'Authentication successful'
+            }
+            
+        except Exception as e:
+            # Login failed or server error
+            return False, {'error': str(e)}
 
     @api.model
     def test_ldap_connection(self):
