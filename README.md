@@ -124,13 +124,6 @@ su_sms/
 
 ### 1. Pre-Installation Setup
 
-#### Install Python Dependencies
-```bash
-# Install required Python packages
-pip3 install requests --break-system-packages
-pip3 install python-dotenv --break-system-packages
-pip3 install ldap3 --break-system-packages
-```
 
 #### Create Environment Configuration
 ```bash
