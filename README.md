@@ -144,32 +144,32 @@ nano .env
 Add the following configuration:
 ```bash
 # Africa's Talking Configuration
-AT_USERNAME=sandbox
+AT_USERNAME=sandbox/your_app_name
 AT_API_KEY=your_api_key_here
-AT_SENDER_ID=STRATHU
-AT_ENVIRONMENT=sandbox
+AT_SENDER_ID=your_sender_id
+AT_ENVIRONMENT=sandbox/production
 
 # SMS Configuration
 SMS_MINIMUM_CREDIT=5000
 SMS_ICTS_THRESHOLD=15000
 
 # LDAP Configuration (Active Directory)
-LDAP_HOST=192.168.170.20
-LDAP_PORT=3268
+LDAP_HOST=123.34.567
+LDAP_PORT=1234
 LDAP_USERNAME=ldapt@strathmore.local
 LDAP_PASSWORD=your_ldap_password
-LDAP_BASE_DN=dc=strathmore,dc=local
+LDAP_BASE_DN=dc=your_ldap_base,dc=local
 LDAP_TIMEOUT=5
 LDAP_SSL=false
 LDAP_TLS=false
-STRATHMORE_DOMAIN=strathmore.local
-STUDENTS_DOMAIN=std.strathmore.local
-LDAP_STAFF_TREE=OU=Strathmore University,DC=strathmore,DC=local
-LDAP_STUDENT_TREE=ou=strathmore university students,dc=std,dc=strathmore,dc=local
+SCHOOL_DOMAIN=school_domain
+STUDENTS_DOMAIN=xxxxxxxxxxxxxx
+LDAP_STAFF_TREE=OU=staff_tree ,DC=your_dc ,DC=your_dc
+LDAP_STUDENT_TREE=ou=student_tree,dc=std,dc=xxxxxxx,dc=your_dc
 
 # Strathmore Dataservices
-STUDENT_DATASERVICE_URL=https://juba.strathmore.edu/dataservice/students/
-STAFF_DATASERVICE_URL=https://juba.strathmore.edu/dataservice/staff/
+STUDENT_DATASERVICE_URL=(students_link)
+STAFF_DATASERVICE_URL=(staff_dataservice_link)
 DATASERVICE_TIMEOUT=10
 DATASERVICE_USE_MOCK=false
 ```
@@ -440,7 +440,7 @@ https://your-odoo-domain.com/sms/optin/+254712345678
 
 #### Dataservice Connection Failed
 1. Verify STUDENT_DATASERVICE_URL and STAFF_DATASERVICE_URL
-2. Check network connectivity to Juba server
+2. Check network connectivity to server
 3. Test with: **Configuration > Test All Services**
 4. Enable mock data temporarily: `DATASERVICE_USE_MOCK=true`
 
@@ -746,14 +746,6 @@ Before deploying to production:
    - [ ] Create user training materials
    - [ ] Document custom workflows
    - [ ] Update contact information
-
-### Known Limitations
-
-1. **Cron Jobs**: Automated scheduled jobs are disabled by default and require implementation
-2. **Dashboard**: Advanced analytics dashboard is not yet implemented
-3. **SMS Templates**: Dynamic template system is basic and requires enhancement
-4. **Multi-Gateway**: Only Africa's Talking is currently supported
-5. **Mobile App**: No mobile application available yet
 
 ### Security Considerations
 
