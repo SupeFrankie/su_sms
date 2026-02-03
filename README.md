@@ -154,9 +154,9 @@ SMS_MINIMUM_CREDIT=5000
 SMS_ICTS_THRESHOLD=15000
 
 # LDAP Configuration (Active Directory)
-LDAP_HOST=123.34.567
+LDAP_HOST=123.34.567.789
 LDAP_PORT=1234
-LDAP_USERNAME=ldapt@strathmore.local
+LDAP_USERNAME=your_ldap_username
 LDAP_PASSWORD=your_ldap_password
 LDAP_BASE_DN=dc=your_ldap_base,dc=local
 LDAP_TIMEOUT=5
@@ -165,7 +165,7 @@ LDAP_TLS=false
 SCHOOL_DOMAIN=school_domain
 STUDENTS_DOMAIN=xxxxxxxxxxxxxx
 LDAP_STAFF_TREE=OU=staff_tree ,DC=your_dc ,DC=your_dc
-LDAP_STUDENT_TREE=ou=student_tree,dc=std,dc=xxxxxxx,dc=your_dc
+LDAP_STUDENT_TREE=ou=your_tree,dc=std,dc=xxxxxxx,dc=your_dc
 
 # Strathmore Dataservices
 STUDENT_DATASERVICE_URL=(students_link)
