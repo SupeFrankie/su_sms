@@ -113,8 +113,7 @@
                   name="Test All Services"
                   parent="menu_sms_marketing_config"
                   action="action_test_all_services"
-                  sequence="70"
-                  groups="group_sms_system_admin"/>
+                  sequence="70"/>
 
          <!-- Menu Item -->
         <menuitem id="menu_test_ldap"
