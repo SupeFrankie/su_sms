@@ -1,0 +1,14 @@
+# Strathmore University SMS Module - Python Dependencies
+# Install with: pip3 install -r requirements.txt --break-system-packages
+
+# HTTP client for Africa's Talking API and Dataservices
+requests>=2.31.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# LDAP/Active Directory authentication
+ldap3>=2.9.1
+
+# Optional: Suppress pyasn1 deprecation warnings
+pyasn1>=0.5.0
