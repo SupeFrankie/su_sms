@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2024 Strathmore University
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl). -->
+<odoo>
+
+    <!--
+        Menu items live under the existing Email Marketing root menu so the
+        module does not introduce a new top-level application entry.
+        Adjust parent_id if a dedicated top-level menu is preferred.
+    -->
+
+    <!-- Top-level grouping node inside the Email Marketing / Mass Mailing app -->
+    <menuitem id="menu_sms_at_root"
+              name="Africa's Talking SMS"
+              parent="mass_mailing.mass_mailing_menu_root"
+              sequence="30"
+              groups="base.group_user"/>
+
+    <menuitem id="menu_sms_at_templates"
+              name="SMS Templates"
+              parent="menu_sms_at_root"
+              action="action_sms_at_template"
+              sequence="10"
+              groups="mass_mailing.group_mass_mailing_user"/>
+
+    <menuitem id="menu_sms_at_queue"
+              name="SMS Queue"
+              parent="menu_sms_at_root"
+              action="action_sms_sms_at"
+              sequence="20"
+              groups="base.group_system"/>
+
+</odoo>

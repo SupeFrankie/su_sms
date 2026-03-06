@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2024 Strathmore University
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl). -->
+<odoo>
+
+    <!-- ================================================================== -->
+    <!--  Extend the native sms.sms list view                               -->
+    <!--  • Add AT Message ID, AT Delivery Status and Failure Reason columns -->
+    <!--  • Add a per-row Retry button visible only on error records         -->
+    <!-- ================================================================== -->
+    <record id="sms_sms_list_view_at" model="ir.ui.view">
+        <field name="name">sms.sms.list.at</field>
+        <field name="model">sms.sms</field>
+        <field name="inherit_id" ref="sms.sms_sms_list_view"/>
+        <field name="arch" type="xml">
+
+            <!-- Insert AT columns immediately after the state column -->
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="at_message_id"
+                       optional="show"
+                       string="AT Message ID"/>
+                <field name="at_status"
+                       optional="show"
+                       string="AT Status"/>
+                <field name="at_failure_reason"
+                       optional="show"
+                       string="Failure Reason"/>
+            </xpath>
+
+            <!--
+                Per-row Retry button.
+                Odoo 17+ uses inline boolean expressions instead of the
+                legacy attrs dict.  The button is only rendered for error
+                records and restricted to system administrators.
+            -->
+            <xpath expr="//list" position="inside">
+                <button name="action_retry_send"
+                        type="object"
+                        string="Retry"
+                        icon="fa-refresh"
+                        invisible="state != 'error'"
+                        groups="base.group_system"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!--  Extend the native sms.sms form view                               -->
+    <!--  • Prominent Retry button in the header (error records only)       -->
+    <!--  • AT fields below the standard state field                        -->
+    <!-- ================================================================== -->
+    <record id="sms_sms_form_view_at" model="ir.ui.view">
+        <field name="name">sms.sms.form.at</field>
+        <field name="model">sms.sms</field>
+        <field name="inherit_id" ref="sms.sms_sms_form_view"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//header" position="inside">
+                <button name="action_retry_send"
+                        type="object"
+                        string="Retry Send"
+                        class="btn-primary"
+                        invisible="state != 'error'"
+                        groups="base.group_system"/>
+            </xpath>
+
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="at_message_id"
+                       string="AT Message ID"
+                       readonly="1"
+                       invisible="not at_message_id"/>
+                <field name="at_status"
+                       string="AT Delivery Status"
+                       readonly="1"
+                       invisible="not at_status"/>
+                <field name="at_failure_reason"
+                       string="Failure Reason"
+                       readonly="1"
+                       invisible="not at_failure_reason"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!--  Standalone action – opens the SMS queue grouped by state          -->
+    <!-- ================================================================== -->
+    <record id="action_sms_sms_at" model="ir.actions.act_window">
+        <field name="name">SMS Queue</field>
+        <field name="res_model">sms.sms</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_state': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No SMS messages yet.
+            </p>
+            <p>
+                Messages sent via Africa's Talking will appear here.
+                Use the <strong>Retry</strong> button on failed records to
+                re-send them.
+            </p>
+        </field>
+    </record>
+
+</odoo>

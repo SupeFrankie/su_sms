@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2024 Strathmore University
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl). -->
+<odoo>
+
+    <record id="res_config_settings_view_form_at" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.at</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.action_general_configuration"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//div[hasclass('settings')]" position="before">
+                <app string="SMS – Africa's Talking"
+                     name="sms_africastalking_provider"
+                     groups="base.group_system">
+
+                    <!-- ============================================== -->
+                    <!--  API Credentials                               -->
+                    <!-- ============================================== -->
+                    <block title="Africa's Talking API Credentials"
+                           help="Get your credentials at https://account.africastalking.com/. Keep the API key secret.">
+
+                        <setting string="Username"
+                                 help="Your Africa's Talking account username. Use 'sandbox' for the testing environment.">
+                            <field name="at_username" placeholder="e.g. sandbox"/>
+                        </setting>
+
+                        <setting string="API Key"
+                                 help="The API key shown in your Africa's Talking dashboard under Settings → API Key.">
+                            <field name="at_api_key" password="True"/>
+                        </setting>
+
+                        <setting string="Sender ID / Short-code"
+                                 help="Alphanumeric sender ID or short-code registered in your AT account. Leave blank to use the AT shared short-code.">
+                            <field name="at_sender_id" placeholder="e.g. StrathmoreU"/>
+                        </setting>
+
+                        <setting string="Use Sandbox"
+                                 help="Route all SMS through the Africa's Talking sandbox – no real messages are sent and no charges are incurred. Disable in production.">
+                            <field name="at_sandbox"/>
+                        </setting>
+
+                        <setting string="API Request Timeout (s)"
+                                 help="Maximum seconds to wait for Africa's Talking to respond. Increase this value if you experience timeouts during large bulk sends. Default: 30.">
+                            <field name="at_request_timeout"/>
+                        </setting>
+
+                    </block>
+
+                    <!-- ============================================== -->
+                    <!--  Webhook / Delivery Reports                    -->
+                    <!-- ============================================== -->
+                    <block title="Delivery Report Webhook"
+                           help="Configure the URL below in your Africa's Talking dashboard under SMS → Delivery Reports to receive real-time delivery status updates.">
+
+                        <setting string="Callback URL"
+                                 help="Copy this URL into the Africa's Talking SMS Delivery Reports callback field.">
+                            <div class="text-muted">
+                                <code>/sms/africastalking/delivery</code>
+                                &amp;nbsp;(prefix with your Odoo domain)
+                            </div>
+                        </setting>
+
+                        <setting string="Webhook Verification Token"
+                                 help="Optional secret. When set, the webhook controller checks that every callback includes the header 'Authorization: Bearer &lt;token&gt;'. Leave blank to accept all callbacks without authentication (not recommended for production).">
+                            <field name="at_webhook_token" password="True"/>
+                        </setting>
+
+                    </block>
+
+                </app>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

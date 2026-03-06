@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sms_at_template_user,sms.at.template (user – read only),model_sms_at_template,base.group_user,1,0,0,0
+access_sms_at_template_mailing_user,sms.at.template (mailing user – read/write/create),model_sms_at_template,mass_mailing.group_mass_mailing_user,1,1,1,0
+access_sms_at_template_system,sms.at.template (system – full access),model_sms_at_template,base.group_system,1,1,1,1

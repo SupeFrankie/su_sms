@@ -1,0 +1,11 @@
+# Python dependencies for sms_africastalking_provider
+#
+# This module intentionally uses Python's built-in ``urllib`` for HTTP
+# communication with Africa's Talking so that no external packages need to
+# be installed.  The ``africastalking`` SDK and ``requests`` library are
+# NOT used and must NOT be listed here.
+#
+# If you later want strict ITU-T E.164 validation, install:
+#   phonenumbers>=8.13.0
+#
+# No packages required at this time.
