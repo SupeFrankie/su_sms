@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2024 Strathmore University
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl). -->
+<odoo>
+
+    <!-- ================================================================== -->
+    <!--  Analytics Form View                                               -->
+    <!-- ================================================================== -->
+    <record id="sms_at_analytics_form_view" model="ir.ui.view">
+        <field name="name">sms.at.analytics.form</field>
+        <field name="model">sms.at.analytics</field>
+        <field name="arch" type="xml">
+            <form string="SMS Analytics" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_refresh"
+                            type="object"
+                            string="Refresh"
+                            class="btn-secondary"
+                            icon="fa-refresh"/>
+                </header>
+                <sheet>
+
+                    <!-- Stat buttons row -->
+                    <div class="oe_button_box" name="button_box" style="width:100%">
+
+                        <button class="oe_stat_button" icon="fa-paper-plane" type="button">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="total_sent"/>
+                                </span>
+                                <span class="o_stat_text">Total Sent</span>
+                            </div>
+                        </button>
+
+                        <button class="oe_stat_button" icon="fa-times-circle" type="button">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="total_failed"/>
+                                </span>
+                                <span class="o_stat_text">Total Failed</span>
+                            </div>
+                        </button>
+
+                        <button class="oe_stat_button" icon="fa-clock-o" type="button">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="total_queued"/>
+                                </span>
+                                <span class="o_stat_text">Queued</span>
+                            </div>
+                        </button>
+
+                        <button class="oe_stat_button" icon="fa-calendar-o" type="button">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="sent_today"/>
+                                </span>
+                                <span class="o_stat_text">Sent Today</span>
+                            </div>
+                        </button>
+
+                        <button class="oe_stat_button" icon="fa-calendar" type="button">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="sent_this_month"/>
+                                </span>
+                                <span class="o_stat_text">Sent This Month</span>
+                            </div>
+                        </button>
+
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>Africa's Talking SMS Analytics</h1>
+                    </div>
+
+                    <group>
+                        <group string="Delivery Performance">
+                            <field name="total_sent"    readonly="1" string="Total Sent"/>
+                            <field name="total_failed"  readonly="1" string="Total Failed"/>
+                            <field name="total_queued"  readonly="1" string="Currently Queued"/>
+                            <field name="delivery_rate" readonly="1" string="Delivery Rate (%)"
+                                   widget="float" digits="[5,1]"
+                                   help="Percentage of messages that reached the 'sent' state."/>
+                        </group>
+                        <group string="Cost and Activity">
+                            <field name="total_cost"       readonly="1" string="Total Cost"/>
+                            <field name="sent_today"       readonly="1" string="Sent Today"/>
+                            <field name="sent_this_month"  readonly="1" string="Sent This Month"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="last_refreshed" readonly="1" string="Metrics as of"/>
+                    </group>
+
+                    <div class="alert alert-info" role="alert" style="margin-top:16px;">
+                        <i class="fa fa-info-circle"/>&#160;
+                        Metrics are calculated live from the SMS Queue.
+                        Click <strong>Refresh</strong> to recompute.
+                        <strong>Queued</strong> records are awaiting dispatch
+                        by the cron job (runs every minute).
+                    </div>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!--  Window Action                                                      -->
+    <!-- ================================================================== -->
+    <record id="action_sms_at_analytics" model="ir.actions.act_window">
+        <field name="name">SMS Analytics</field>
+        <field name="res_model">sms.at.analytics</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Open the analytics dashboard
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,5 @@
+# Python dependencies for sms_africastalking_provider
+#
+africastalking>=2.0.2
+requests>=2.31.0
+phonenumbers>=9.0.25

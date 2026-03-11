@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2024 Strathmore University
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl). -->
+<odoo>
+
+    <!--
+        Cron: Africa's Talking SMS Queue Processor
+        ============================================
+        Runs every minute.  Fetches records with state='queued' and dispatches
+        them via the Africa's Talking API in batches.
+
+        This replaces the blocking time.sleep() that was previously used inside
+        sms_sms._send().  Odoo web workers are never blocked by HTTP calls to
+        Africa's Talking — only the cron worker thread is used.
+
+        Interval is set to 1 minute (interval_number=1, interval_type='minutes').
+        Administrators can adjust the cadence in Settings --> Technical --> Automation
+        --> Scheduled Actions without modifying this file.
+
+        nextcall is set to "2000-01-01" so the cron is eligible to run
+        immediately after module installation.
+    -->
+    <record id="ir_cron_sms_at_queue" model="ir.cron">
+        <field name="name">Africa's Talking: Process SMS Queue</field>
+        <field name="model_id" ref="sms.model_sms_sms"/>
+        <field name="state">code</field>
+        <field name="code">model._process_africastalking_queue()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+        <field name="priority">5</field>
+        <field name="user_id" ref="base.user_root"/>
+    </record>
+
+</odoo>

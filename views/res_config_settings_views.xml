@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2024 Strathmore University - License LGPL-3.0 or later -->
+<odoo>
+
+    <record id="res_config_settings_view_form_at" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.at</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//form" position="inside">
+
+                <app string="SMS - Africa's Talking"
+                     name="sms_africastalking_provider"
+                     groups="base.group_system">
+
+                    <!-- ================================================ -->
+                    <!--  Provider Selection                               -->
+                    <!-- ================================================ -->
+                    <block title="SMS Provider"
+                           help="Choose which SMS gateway Odoo uses for all outgoing messages.">
+
+                        <setting string="Active SMS Provider"
+                                 help="Africa's Talking: uses your AT credentials below. Odoo IAP: uses Odoo's built-in SMS credit system (credentials below are ignored).">
+                            <field name="at_provider" widget="radio"/>
+                        </setting>
+
+                    </block>
+
+                    <!-- ================================================ -->
+                    <!--  API Credentials                                  -->
+                    <!-- ================================================ -->
+                    <block title="Africa's Talking API Credentials"
+                           help="Get your credentials at https://account.africastalking.com/. Keep your API Key secret.">
+
+                        <setting string="Username"
+                                 help="Your Africa's Talking account username. Use 'sandbox' for the testing environment.">
+                            <field name="at_username" placeholder="e.g. sandbox"/>
+                        </setting>
+
+                        <setting string="API Key"
+                                 help="The API key shown in your Africa's Talking dashboard under Settings - API Key.">
+                            <field name="at_api_key" password="True"/>
+                        </setting>
+
+                        <setting string="Sender ID / Short-code"
+                                 help="Alphanumeric sender ID or short-code registered in your AT account. Leave blank to use the AT shared short-code. REQUIRED for Safaricom (Kenya) to bypass promotional filter (*456#).">
+                            <field name="at_sender_id" placeholder="e.g. StrathmoreU"/>
+                        </setting>
+
+                        <setting string="Use Sandbox"
+                                 help="Route all SMS through the Africa's Talking sandbox. No real messages are sent and no charges are incurred. Disable in production.">
+                            <field name="at_sandbox"/>
+                        </setting>
+
+                        <setting string="API Request Timeout (seconds)"
+                                 help="Maximum seconds to wait for Africa's Talking to respond. Increase if you see timeout errors on large bulk sends. Default: 30.">
+                            <field name="at_request_timeout"/>
+                        </setting>
+
+                        <!-- Check Balance button -->
+                        <setting string="Account Balance"
+                                 help="Fetch the current Africa's Talking account balance. Credentials must be saved before clicking.">
+                            <button name="action_check_at_balance"
+                                    type="object"
+                                    string="Check SMS Balance"
+                                    class="btn-secondary"
+                                    icon="fa-refresh"/>
+                        </setting>
+
+                    </block>
+
+                    <!-- ================================================ -->
+                    <!--  Delivery Report Webhook                          -->
+                    <!-- ================================================ -->
+                    <block title="Delivery Report Webhook"
+                           help="Configure the URL below in your Africa's Talking dashboard under SMS - Delivery Reports to receive real-time delivery status updates.">
+
+                        <setting string="Callback URL"
+                                 help="Copy this URL into the Africa's Talking SMS Delivery Reports callback field.">
+                            <div class="text-muted">
+                                <code>/sms/africastalking/delivery</code>
+                                &#160;(prefix with your Odoo domain, e.g.
+                                <code>https://erp.strathmore.edu/sms/africastalking/delivery</code>)
+                            </div>
+                        </setting>
+
+                        <setting string="Webhook Verification Token"
+                                 help="Optional secret. When set, every delivery callback must include 'Authorization: Bearer YOUR_TOKEN'. Leave blank to accept all callbacks without authentication.">
+                            <field name="at_webhook_token" password="True"/>
+                        </setting>
+
+                    </block>
+
+                    <!-- ================================================ -->
+                    <!--  Kenya / Safaricom Note                           -->
+                    <!-- ================================================ -->
+                    <block title="Kenya — Safaricom Promotional Filter">
+                        <setting string="Important">
+                            <div class="text-muted">
+                                Without an approved <strong>Sender ID</strong>, messages to Safaricom
+                                subscribers may land in the <strong>*456# promotional inbox</strong>
+                                instead of the main SMS inbox.<br/>
+                                To bypass the filter:<br/>
+                                1. Register a Sender ID in your AT dashboard under
+                                <em>SMS &#x2192; Sender ID Management</em>.<br/>
+                                2. Await Safaricom approval (typically 2&#x2013;5 business days).<br/>
+                                3. Enter the approved Sender ID in the field above and save.
+                            </div>
+                        </setting>
+                    </block>
+
+                </app>
+
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

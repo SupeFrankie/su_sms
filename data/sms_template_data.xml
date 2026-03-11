@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2024 Strathmore University
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl).
+
+     Demo / seed templates installed at module installation.
+     Safe to delete after verifying the module works correctly.
+-->
+<odoo>
+
+    <record id="sms_template_welcome" model="sms.at.template">
+        <field name="name">Welcome Message</field>
+        <field name="body">Hi {{first_name}}, welcome to Strathmore! We are glad to have you with us. Reply STOP to opt out.</field>
+    </record>
+
+    <record id="sms_template_appointment_reminder" model="sms.at.template">
+        <field name="name">Appointment Reminder</field>
+        <field name="body">Hello {{first_name}} {{last_name}}, this is a reminder about your upcoming appointment. Please confirm by replying YES. Queries? Email {{email}}.</field>
+    </record>
+
+    <record id="sms_template_event_invite" model="sms.at.template">
+        <field name="name">Event Invitation</field>
+        <field name="body">Dear {{first_name}}, you are invited to our upcoming event. For more details we will reach you on {{phone}}. See you there!</field>
+    </record>
+
+</odoo>

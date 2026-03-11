@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2024 Strathmore University
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl). -->
+<odoo>
+
+    <!-- ================================================================== -->
+    <!--  Standalone list view — SMS Queue                                  -->
+    <!-- ================================================================== -->
+    <record id="sms_sms_list_view_at" model="ir.ui.view">
+        <field name="name">sms.sms.list.at</field>
+        <field name="model">sms.sms</field>
+        <field name="arch" type="xml">
+            <list string="SMS Queue"
+                  decoration-danger="state == 'error'"
+                  decoration-success="state == 'sent'"
+                  decoration-warning="state == 'queued'"
+                  decoration-muted="state == 'cancel'">
+
+                <field name="number"            string="Phone Number"/>
+                <field name="body"              string="Message"           optional="show"/>
+                <field name="state"             string="State"             widget="badge"
+                       decoration-danger="state == 'error'"
+                       decoration-success="state == 'sent'"
+                       decoration-warning="state == 'outgoing' or state == 'queued'"/>
+                <field name="at_message_id"     string="AT Message ID"     optional="show"/>
+                <field name="delivery_status"   string="Delivery Status"   optional="show"/>
+                <field name="at_cost"           string="Cost (KES)"        optional="show"/>
+                <field name="at_failure_reason" string="Failure Reason"    optional="show"/>
+
+                <button name="action_retry_send"
+                        type="object"
+                        string="Retry"
+                        icon="fa-refresh"
+                        invisible="state != 'error'"
+                        groups="base.group_system"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!--  Standalone form view — SMS Queue                                  -->
+    <!-- ================================================================== -->
+    <record id="sms_sms_form_view_at" model="ir.ui.view">
+        <field name="name">sms.sms.form.at</field>
+        <field name="model">sms.sms</field>
+        <field name="arch" type="xml">
+            <form string="SMS Message">
+                <header>
+                    <button name="action_retry_send"
+                            type="object"
+                            string="Retry Send"
+                            class="btn-primary"
+                            invisible="state != 'error'"
+                            groups="base.group_system"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="outgoing,queued,sent,error"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Message">
+                            <field name="number" string="Phone Number" readonly="1"/>
+                            <field name="body"   string="Message Body" readonly="1"/>
+                            <field name="state"  string="State"        readonly="1"/>
+                        </group>
+                        <group string="Africa's Talking">
+                            <field name="at_message_id"
+                                   string="AT Message ID"
+                                   readonly="1"
+                                   invisible="not at_message_id"/>
+                            <field name="delivery_status"
+                                   string="Delivery Status"
+                                   readonly="1"
+                                   invisible="not delivery_status"/>
+                            <field name="at_cost"
+                                   string="Cost (KES)"
+                                   readonly="1"
+                                   invisible="not at_cost"/>
+                            <field name="at_failure_reason"
+                                   string="Failure Reason"
+                                   readonly="1"
+                                   invisible="not at_failure_reason"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!--  Window action — SMS Queue                                         -->
+    <!-- ================================================================== -->
+    <record id="action_sms_sms_at" model="ir.actions.act_window">
+        <field name="name">SMS Queue</field>
+        <field name="res_model">sms.sms</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_state': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No SMS messages yet.
+            </p>
+            <p>
+                Messages sent via Africa's Talking will appear here.
+                Records in <strong>Queued</strong> state are waiting for the
+                cron job to dispatch them.
+                Use the <strong>Retry Send</strong> button on failed records
+                to re-queue them.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2024 Strathmore University
+     License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl). -->
+<odoo>
+
+    <!-- ================================================================== -->
+    <!--  List view                                                          -->
+    <!-- ================================================================== -->
+    <record id="sms_at_template_list_view" model="ir.ui.view">
+        <field name="name">sms.at.template.list</field>
+        <field name="model">sms.at.template</field>
+        <field name="arch" type="xml">
+            <list string="SMS Templates" decoration-muted="not active">
+                <field name="name"/>
+                <!--
+                    'encoding' is store=False — safe to DISPLAY as a column,
+                    but cannot be used in search domains or group-by.
+                -->
+                <field name="encoding"     string="Encoding"   optional="show"/>
+                <field name="char_count"   string="Chars"/>
+                <field name="sms_segments" string="Segments"/>
+                <field name="mailing_list_ids"
+                       widget="many2many_tags"
+                       string="Mailing Lists"
+                       optional="show"/>
+                <field name="last_sent"    optional="show"/>
+                <field name="active"       column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!--  Form view                                                          -->
+    <!-- ================================================================== -->
+    <record id="sms_at_template_form_view" model="ir.ui.view">
+        <field name="name">sms.at.template.form</field>
+        <field name="model">sms.at.template</field>
+        <field name="arch" type="xml">
+            <form string="SMS Template">
+                <header>
+                    <button name="action_send_to_lists"
+                            type="object"
+                            string="Send to Lists"
+                            class="btn-primary"
+                            confirm="This will send a personalised SMS to every active, opted-in contact with a mobile number in the selected lists. Continue?"
+                            invisible="not mailing_list_ids"/>
+                    <button name="action_preview"
+                            type="object"
+                            string="Preview"
+                            class="btn-secondary"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-archive">
+                            <field name="active"
+                                   widget="boolean_button"
+                                   options="{'terminology': 'archive'}"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name"
+                                   placeholder="e.g. Welcome Message"
+                                   style="width:100%"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Message Body">
+                            <field name="body"
+                                   widget="text"
+                                   placeholder="Hi {{first_name}}, your message here..."
+                                   nolabel="1"
+                                   style="min-height:120px"/>
+                            <div class="text-muted small" colspan="2">
+                                <!--
+                                    FIX: replaced &nbsp; with &#160;
+                                    &nbsp; is an HTML entity — XML does not know it.
+                                    &#160; is the identical non-breaking space written
+                                    as a numeric XML entity that every XML parser accepts.
+                                -->
+                                <strong>Supported merge tokens</strong> (replaced per-contact at send time):<br/>
+                                <code>{{first_name}}</code> - first name&#160;
+                                <code>{{last_name}}</code> - last name&#160;
+                                <code>{{email}}</code> - e-mail&#160;
+                                <code>{{phone}}</code> - mobile number
+                            </div>
+                        </group>
+                        <group string="Message Stats">
+                            <field name="encoding"
+                                   readonly="1"
+                                   help="GSM7: 160 chars/segment (single) or 153/segment (multi-part). UCS2: 70 chars/segment (single) or 67/segment (multi-part)."/>
+                            <field name="char_count"   readonly="1" string="Characters"/>
+                            <field name="sms_segments" readonly="1"
+                                   help="Estimated SMS segments. Multi-part GSM-7: 153 chars each; UCS-2: 67 chars each."/>
+                            <field name="last_sent"    readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Target Mailing Lists" colspan="2">
+                        <field name="mailing_list_ids"
+                               widget="many2many_tags"
+                               nolabel="1"
+                               placeholder="Add mailing lists..."/>
+                        <div class="text-muted small" colspan="2">
+                            The template is sent to every
+                            <em>opted-in</em> contact with a mobile number across the
+                            selected lists. Duplicate mobile numbers are sent exactly
+                            one message.
+                        </div>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!--  Search view                                                        -->
+    <!-- ================================================================== -->
+    <record id="sms_at_template_search_view" model="ir.ui.view">
+        <field name="name">sms.at.template.search</field>
+        <field name="model">sms.at.template</field>
+        <field name="arch" type="xml">
+            <search string="Search Templates">
+                <!--
+                    <field> elements must come FIRST in a search view.
+                    They add the field to the search-bar autocomplete drop-down.
+                -->
+                <field name="name"/>
+                <field name="body" string="Body"/>
+
+                <filter string="Active"
+                        name="active"
+                        domain="[('active','=',True)]"/>
+                <filter string="Archived"
+                        name="archived"
+                        domain="[('active','=',False)]"/>
+                <separator/>
+                <filter string="Has Mailing Lists"
+                        name="has_lists"
+                        domain="[('mailing_list_ids','!=',False)]"/>
+
+                <!--
+                    FIX 1: Removed the "Unicode (UCS-2)" search filter.
+                    It used domain="[('encoding','=','ucs2')]" but 'encoding'
+                    is store=False — no database column exists so Odoo cannot
+                    run a SQL WHERE clause against it.
+
+                    FIX 2: Removed the "Group By Encoding" filter.
+                    Same reason — GROUP BY on a non-stored field is impossible.
+
+                    FIX 3: Removed expand="0" from <group>.
+                    The 'expand' attribute on <group> was dropped in Odoo 17.
+                    Leaving it in causes an RNG schema validation error that
+                    prevents the entire module from loading.
+                -->
+                <group >
+                    <filter string="Last Sent"
+                            name="group_last_sent"
+                            context="{'group_by': 'last_sent:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!--  Window action                                                      -->
+    <!-- ================================================================== -->
+    <record id="action_sms_at_template" model="ir.actions.act_window">
+        <field name="name">SMS Templates</field>
+        <field name="res_model">sms.at.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="sms_at_template_search_view"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first SMS template
+            </p>
+            <p>
+                Use merge tokens such as <code>{{first_name}}</code> and
+                <code>{{last_name}}</code> to personalise each message.
+                Then link the template to one or more mailing lists and click
+                <strong>Send to Lists</strong>.
+            </p>
+        </field>
+    </record>
+
+</odoo>
