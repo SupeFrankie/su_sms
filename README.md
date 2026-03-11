@@ -97,7 +97,7 @@ token with HTTP 401, causing AT to retry with corrected credentials.
 
 ### Sending a template to mailing lists
 
-1. Go to **Email Marketing --> Africa's Talking SMS --> SMS Templates**.
+1. Go to **SMS Marketing --> Africa's Talking SMS --> SMS Templates**.
 2. Create a template.  Use merge tokens in the body:
 
    | Token | Resolves to |
@@ -114,7 +114,7 @@ token with HTTP 401, causing AT to retry with corrected credentials.
 
 ### Retrying failed SMS
 
-1. Go to **Email Marketing --> Africa's Talking SMS --> SMS Queue**.
+1. Go to **SMS Marketing --> Africa's Talking SMS --> SMS Queue**.
 2. Open or select records with state **Error**.
 3. Click **Retry Send**.  The notification tells you how many succeeded and
    how many still failed.
