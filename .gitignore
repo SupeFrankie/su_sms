@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+*.swp
+*.log
+.env
+odoo.conf
+*.sqlite3
